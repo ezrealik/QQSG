@@ -109,6 +109,7 @@ BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case IDC_BUTTON_AnimateImage:
 			CallThreadFunction(ImportAnimateImage);
+
 			break;
 		case ID_MENU_40001:
 			CallThreadFunction(LayerUpImage);
