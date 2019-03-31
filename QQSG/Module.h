@@ -4,8 +4,16 @@
 #include <Windows.h>
 #include <shlobj.h>
 
+#ifdef _UNICODE
+#define GetExePath GetExePathW
+#define CreateDirectoryEc CreateDirectoryEcW
+#else
+#define GetExePath GetExePathA
+#define CreateDirectoryEc CreateDirectoryEcA
+#endif
+
 void GetExePathW(WCHAR*dirbuf, int len);
 void GetExePathA(char*dirbuf, int len);
-void CreateDirectoryEc(char* Dir);
-
+void CreateDirectoryEcA(const char* Dir);
+void CreateDirectoryEcW(const WCHAR* Dir);
 #endif

@@ -119,11 +119,39 @@
   <ItemGroup>
     <ClCompile Include="..\QQSG\GameDirectX9.cpp" />
     <ClCompile Include="..\QQSG\Module.cpp" />
+    <ClCompile Include="..\QQSG\ResouceFile.cpp" />
+    <ClCompile Include="..\QQSG\zlib\adler32.c" />
+    <ClCompile Include="..\QQSG\zlib\compress.c" />
+    <ClCompile Include="..\QQSG\zlib\crc32.c" />
+    <ClCompile Include="..\QQSG\zlib\deflate.c" />
+    <ClCompile Include="..\QQSG\zlib\gzclose.c" />
+    <ClCompile Include="..\QQSG\zlib\gzlib.c" />
+    <ClCompile Include="..\QQSG\zlib\gzread.c" />
+    <ClCompile Include="..\QQSG\zlib\gzwrite.c" />
+    <ClCompile Include="..\QQSG\zlib\infback.c" />
+    <ClCompile Include="..\QQSG\zlib\inffast.c" />
+    <ClCompile Include="..\QQSG\zlib\inflate.c" />
+    <ClCompile Include="..\QQSG\zlib\inftrees.c" />
+    <ClCompile Include="..\QQSG\zlib\trees.c" />
+    <ClCompile Include="..\QQSG\zlib\uncompr.c" />
+    <ClCompile Include="..\QQSG\zlib\zutil.c" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\QQSG\GameDirectX9.h" />
     <ClInclude Include="..\QQSG\Module.h" />
+    <ClInclude Include="..\QQSG\ResourceFile.hpp" />
+    <ClInclude Include="..\QQSG\zlib\crc32.h" />
+    <ClInclude Include="..\QQSG\zlib\deflate.h" />
+    <ClInclude Include="..\QQSG\zlib\gzguts.h" />
+    <ClInclude Include="..\QQSG\zlib\inffast.h" />
+    <ClInclude Include="..\QQSG\zlib\inffixed.h" />
+    <ClInclude Include="..\QQSG\zlib\inflate.h" />
+    <ClInclude Include="..\QQSG\zlib\inftrees.h" />
+    <ClInclude Include="..\QQSG\zlib\trees.h" />
+    <ClInclude Include="..\QQSG\zlib\zconf.h" />
+    <ClInclude Include="..\QQSG\zlib\zlib.h" />
+    <ClInclude Include="..\QQSG\zlib\zutil.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

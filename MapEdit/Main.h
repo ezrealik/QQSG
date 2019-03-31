@@ -1,18 +1,14 @@
 #pragma once
 #include "../QQSG/Module.h"
 #include "../QQSG/GameDirectX9.h"
+#include "../QQSG/ResourceFile.hpp"
 #include "resource.h"
 #include <string.h>
 #include <windows.h>
 #include <windowsx.h>
 #include <mutex>
-
+using namespace ResouceFile;
 #pragma pack(push,1)
-enum ImageLoadStyle {
-	Image,
-	Animate,
-	Button,
-};
 struct MouseInfo {
 	int x;
 	int y;
@@ -20,38 +16,6 @@ struct MouseInfo {
 	int KeyState;
 	UINT OldTick;
 };
-typedef struct _AnimateImage{
-	float x;
-	float y;
-	UINT Width;
-	UINT Height;
-	float Scale;
-	LPDIRECT3DTEXTURE9 Texture;
-	WCHAR ImageFile[MAX_PATH];
-}AnimateImage, *PAnimateImage;
-typedef struct _ImageTexturInfo
-{
-	float x;
-	float y;
-	UINT Width;
-	UINT Height;
-	float Scale;
-	ImageLoadStyle ImgLoadType;
-	LPDIRECT3DTEXTURE9 Texture;
-	PAnimateImage Animate;
-	UINT AnimateTickIndex;
-	UINT OldAnimateTick;
-	UINT AnimateMaxCout;
-	UINT AnimateDelay;
-	WCHAR ImageFile[MAX_PATH];
-	D3DCOLOR RectAngleColor;
-	BOOL HeightLight;
-}ImageTexturInfo, *PImageTexturInfo;
-typedef struct _MapImageInfo
-{
-	PImageTexturInfo Image;
-	UINT MaxImage;
-}MapImageInfo, *PMapImageInfo;
 #pragma pack(pop)
 BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //D3DªÊ÷∆œﬂ≥Ã;

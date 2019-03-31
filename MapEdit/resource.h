@@ -14,6 +14,7 @@
 #define IDC_BUTTON_AnimateImage         1009
 #define IDC_BUTTON_ImageFile            1010
 #define IDC_CHECK_PlayAnimate           1011
+#define IDC_BUTTON_PackMap              1013
 #define ID_MENU_40001                   40001
 #define ID_MENU_40002                   40002
 #define ID_MENU_40003                   40003
@@ -31,7 +32,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        104
 #define _APS_NEXT_COMMAND_VALUE         40013
-#define _APS_NEXT_CONTROL_VALUE         1013
+#define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

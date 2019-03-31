@@ -85,13 +85,14 @@ DirectX92D::ImageInfo DirectX92D::GetImageInfoInMemory(void *SrcData, UINT SrcLe
 //从内存中加载纹理;
 LPDIRECT3DTEXTURE9 DirectX92D::LoadMemTexture(void* ImgStream, UINT Imglen, D3DCOLOR transcolor)
 {
+	if (!ImgStream)return nullptr;
 	LPDIRECT3DTEXTURE9 texture = NULL;
 	//get width and height from bitmap file
 	D3DXIMAGE_INFO info;
 	HRESULT result = D3DXGetImageInfoFromFileInMemory(ImgStream, Imglen, &info);
 	if (result != D3D_OK) { MessageBox(nullptr, L"资源加载失败,请确认资源文件是否损坏!", nullptr, MB_OK); ExitProcess(NULL); return nullptr; }
 	//create the new texture by loading a bitmap image file
-	D3DXCreateTextureFromFileInMemoryEx(D3DDevice9,ImgStream,Imglen,
+	result = D3DXCreateTextureFromFileInMemoryEx(D3DDevice9, ImgStream, Imglen,
 		info.Width,            //bitmap image width
 		info.Height,           //bitmap image height
 		1,                     //mip-map levels (1 for no chain)
@@ -122,7 +123,7 @@ LPDIRECT3DTEXTURE9 DirectX92D::LoadTexture(const wchar_t* filename, D3DCOLOR tra
 	HRESULT result = D3DXGetImageInfoFromFile(filename, &info);
 	if (result != D3D_OK) { MessageBox(nullptr, L"资源加载失败,请确认资源文件是否损坏!", nullptr, MB_OK); ExitProcess(NULL); return nullptr; }
 	//create the new texture by loading a bitmap image file
-	D3DXCreateTextureFromFileEx(
+	result = D3DXCreateTextureFromFileEx(
 		D3DDevice9,                //Direct3D device object
 		filename,      //bitmap filename
 		info.Width,            //bitmap image width
@@ -150,7 +151,7 @@ LPDIRECT3DTEXTURE9 DirectX92D::LoadRectTexture(const wchar_t* filename, UINT Wid
 	HRESULT result = D3DXGetImageInfoFromFile(filename, &info);
 	if (result != D3D_OK) { MessageBox(nullptr, L"资源加载失败,请确认资源文件是否损坏!", nullptr, MB_OK); ExitProcess(NULL); return nullptr; }
 	//create the new texture by loading a bitmap image file
-	D3DXCreateTextureFromFileEx(
+	result = D3DXCreateTextureFromFileEx(
 		D3DDevice9,                //Direct3D device object
 		filename,      //bitmap filename
 		Width,            //bitmap image width
