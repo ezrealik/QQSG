@@ -10,7 +10,7 @@
 
 #pragma comment(lib,"bass.lib")
 #pragma warning(disable:4996)
-
+using namespace ResouceFile;
 #define CL_WinWidth 1024
 #define CL_WinHeight 768
 #pragma pack(push,1)
@@ -55,7 +55,6 @@ typedef struct _DrawImageInfo
 
 #pragma region //全局变量
 const WCHAR ClassName[] = L"QQSGDiy";
-WCHAR ExePath[256] = { 0 };
 HWND G_hWnd;
 BOOL DrawGame = TRUE, DrawTip = FALSE, DrawCreatPlyer = TRUE, IsMan = FALSE;
 void *BGM_Login1 = nullptr;
@@ -63,8 +62,8 @@ HSTREAM StreamBGM1;
 DirectX92D D2Dx9;
 ImeInput Ime;
 MouseInfo MousePoint = { 0 };
-UINT Countf = 0, OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, OldTickCount = 0, PlayerIndex = 0, Country = 0;
-DrawImageInfo DrawImgInf = { 0 };
+UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, OldTickCount = 0, PlayerIndex = 0, Country = 0;
+DrawImageInfo CreatePlayerImgInfo = { 0 }, CreatePlayer = { 0 };
 #pragma endregion
 //窗口处理函数;
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -74,6 +73,12 @@ void D3DGameRun();
 void PlayerBGM_Login(const char *MusicName);
 //显示FPS帧率:
 void ShowFPS();
+//资源文件加载;
+UINT LoadResourceData(const char *pFile, const char *pResName, void **pAlloc);
+//地图资源加载;
+void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInfo &pMapAlloc, UINT pLen, const char*pMapFile);
+//释放已加载的地图资源
+void ReleaseMapResource(DrawImageInfo &PMapImageInfo);
 //初始化绘制创建玩家资源;
 void InitDrawCreatePlayer();
 //绘制玩家角色创建;

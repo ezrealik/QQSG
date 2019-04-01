@@ -2,11 +2,15 @@
 using namespace ResouceFile;
 ResouceDataFile::ResouceDataFile()
 {
-	OutputDebugStringA("构造函数开启!\n");
+	//OutputDebugStringA("构造函数开启!\n");
 }
 
 ResouceDataFile::~ResouceDataFile()
 {
+	Release();
+	//OutputDebugStringA("析构函数开启!\n");
+}
+void ResouceDataFile::Release() {
 	if (GetDataIndexAlloc) {
 		for (int i = 0; i < DataIndexNumber; i++) {
 			if (GetDataIndexAlloc[i].pFileName) {
@@ -14,7 +18,7 @@ ResouceDataFile::~ResouceDataFile()
 			}
 		}
 		LocalFree(GetDataIndexAlloc);
-	}	
+	}
 	if (G_MapImage.Mapinfo) {
 		for (UINT i = 0; i < G_MapImage.MaxCount; i++) {
 			if (G_MapImage.Mapinfo[i].Animate) {
@@ -24,10 +28,9 @@ ResouceDataFile::~ResouceDataFile()
 		LocalFree(G_MapImage.Mapinfo);
 		G_MapImage = { 0 };
 	}
-	OutputDebugStringA("析构函数开启!\n");
 }
 //获取资源包数据索引表(资源包文件名,索引表接收缓冲区)成功返回索引表数量,失败返回0. 不使用一定记得释放资源;
-ResouceDataFile::ResDataIndexInfo *ResouceDataFile::GetResDataIndex(char *FilePath) {
+ResouceDataFile::ResDataIndexInfo *ResouceDataFile::GetResDataIndex(const char *FilePath) {
 	FILE *ResFile = nullptr;
 	ResDataIndexInfo *ResInfo = nullptr;
 	int pathlen = 0;
@@ -78,7 +81,7 @@ void ResouceDataFile::GetExePathA(char*dirbuf, int len) {
 	(strrchr(dirbuf, '\\'))[1] = 0;
 }
 //打包文件资源包(预打包文件目录);
-BOOL ResouceDataFile::PackageResouce(char *FilePath) {
+BOOL ResouceDataFile::PackageResouce(const char *FilePath) {
 	//申请全局预打包资源文件名数组;
 	GvResfile = (ResouceFileInfo*)LocalAlloc(LMEM_ZEROINIT, sizeof(ResouceFileInfo) * MaxCount);
 	if(!GvResfile)return FALSE;
@@ -175,7 +178,7 @@ BOOL ResouceDataFile::PackageResouce(char *FilePath) {
 	return TRUE;
 }
 //截取资源路径;
-char *ResouceDataFile::GetResDirectory(char*dirbuf, char*sourbuf) {
+char *ResouceDataFile::GetResDirectory(const char*dirbuf, char*sourbuf) {
 	int ilen = strlen(sourbuf);
 	char *pdir = sourbuf;
 	for (int i = 0; i < ilen; i++) {
@@ -242,8 +245,7 @@ ResouceDataFile::GetAllgpxFilepathFromfolderError ResouceDataFile::GetAllgpxFile
 	return Succeed;
 }
 //打包地图表;
-BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
-	if (!Resmpinfo)return FALSE;
+BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UINT CreenY) {
 	char FileName[256] = { 0 };
 	GetExePathA(FileName, sizeof(FileName));
 	strcat(FileName, "\\ResMap.map");
@@ -253,13 +255,15 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 	ResMapInfoHeader ResMapHeader = { 0 };
 	strcpy(ResMapHeader.header, "Map");
 	fwrite(&ResMapHeader, sizeof(ResMapHeader), 1, pFile);
-	ResMapInfo *ResMp = (ResMapInfo*)LocalAlloc(LMEM_ZEROINIT, sizeof(ResMapInfo)*Resmpinfo->MaxImage);
+	ResMapInfo *ResMp = (ResMapInfo*)LocalAlloc(LMEM_ZEROINIT, sizeof(ResMapInfo)*Resmpinfo.MaxImage);
 	if (!ResMp)return FALSE;
-	for (UINT i = 0; i < Resmpinfo->MaxImage; i++) {
-		if (Resmpinfo->Image[i].ImgLoadType == Image) {
+	UINT IndexNum = Resmpinfo.MaxImage;
+	for (UINT i = 0; i < Resmpinfo.MaxImage; i++) {
+		if (Resmpinfo.Image[i].IsHide) { IndexNum--; continue; }
+		if (Resmpinfo.Image[i].ImgLoadType == Image) {
 			//UNICODE字符转ANSII字符
-			UINT len = wcslen(Resmpinfo->Image[i].ImageFile);
-			if (!WideCharToMultiByte(CP_ACP, NULL, Resmpinfo->Image[i].ImageFile, len * sizeof(WCHAR), FileName, sizeof(FileName), NULL, NULL))return FALSE;
+			UINT len = wcslen(Resmpinfo.Image[i].ImageFile);
+			if (!WideCharToMultiByte(CP_ACP, NULL, Resmpinfo.Image[i].ImageFile, len * sizeof(WCHAR), FileName, sizeof(FileName), NULL, NULL))return FALSE;
 			//打开图片数组文件;
 			FILE *pNewFile = fopen(FileName, "rb");
 			if (!pNewFile) { MessageBox(0, L"文件打开失败!", NULL, NULL); return FALSE; }
@@ -289,14 +293,14 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 			LocalFree(lzip);
 			fclose(pNewFile);
 		}
-		else if (Resmpinfo->Image[i].ImgLoadType == Animate) {
-			ResMapInfo *pAlloc = (ResMapInfo*)LocalAlloc(LMEM_ZEROINIT, sizeof(ResMapInfo)*Resmpinfo->Image[i].AnimateMaxCout);
+		else if (Resmpinfo.Image[i].ImgLoadType == Animate) {
+			ResMapInfo *pAlloc = (ResMapInfo*)LocalAlloc(LMEM_ZEROINIT, sizeof(ResMapInfo)*Resmpinfo.Image[i].AnimateMaxCout);
 			if(!pAlloc) { MessageBox(0, L"申请内存失败!", NULL, NULL); return FALSE; }
 			ResMp[i].Animate = pAlloc;
-			ResMp[i].AnimateCount = Resmpinfo->Image[i].AnimateMaxCout;
-			for (UINT n = 0; n < Resmpinfo->Image[i].AnimateMaxCout; n++) {
+			ResMp[i].AnimateCount = Resmpinfo.Image[i].AnimateMaxCout;
+			for (UINT n = 0; n < Resmpinfo.Image[i].AnimateMaxCout; n++) {
 				//UNICODE字符转ANSII字符
-				AnimateImage pAnimate = Resmpinfo->Image[i].Animate[n];
+				AnimateImage pAnimate = Resmpinfo.Image[i].Animate[n];
 				UINT len = wcslen(pAnimate.ImageFile);
 				if (!WideCharToMultiByte(CP_ACP, NULL, pAnimate.ImageFile, len * sizeof(WCHAR), FileName, sizeof(FileName), NULL, NULL))return FALSE;
 				//打开图片数组文件;
@@ -332,13 +336,14 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 
 	}
 	ResMapHeader.IndexPoint = ftell(pFile);
-	for (UINT i = 0; i < Resmpinfo->MaxImage; i++) {
+	for (UINT i = 0; i < Resmpinfo.MaxImage; i++) {
+		if (Resmpinfo.Image[i].IsHide) continue;
 		if (ResMp[i].LoadStyle == Image) {
-			ImageTexturInfo pMapInfo = Resmpinfo->Image[i];
+			ImageTexturInfo pMapInfo = Resmpinfo.Image[i];
 			WriteResMapInfo WriteResMap;
 			WriteResMap.AnimateDelay = pMapInfo.AnimateDelay;
-			WriteResMap.x = pMapInfo.x;
-			WriteResMap.y = pMapInfo.y;
+			WriteResMap.x = pMapInfo.x + CreenX;
+			WriteResMap.y = pMapInfo.y + CreenY;
 			WriteResMap.Height = pMapInfo.Height;
 			WriteResMap.Width = pMapInfo.Width;
 			WriteResMap.Scale = pMapInfo.Scale;
@@ -350,8 +355,8 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 			fwrite(&WriteResMap, sizeof(WriteResMap), 1, pFile);
 			fflush(pFile);
 			//UNICODE字符转ANSII字符
-			UINT stringlen = wcslen(Resmpinfo->Image[i].ImageFile);
-			if (!WideCharToMultiByte(CP_ACP, NULL, Resmpinfo->Image[i].ImageFile, stringlen * sizeof(WCHAR), FileName, sizeof(FileName), NULL, NULL))return FALSE;
+			UINT stringlen = wcslen(Resmpinfo.Image[i].ImageFile);
+			if (!WideCharToMultiByte(CP_ACP, NULL, Resmpinfo.Image[i].ImageFile, stringlen * sizeof(WCHAR), FileName, sizeof(FileName), NULL, NULL))return FALSE;
 			//截取索引目录;
 			char szPath[MAX_PATH] = { 0 };
 			GetExePathA(szPath, sizeof(szPath));
@@ -365,11 +370,11 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 			fflush(pFile);
 		}
 		else if (ResMp[i].LoadStyle == Animate) {
-			ImageTexturInfo _pMapInfo = Resmpinfo->Image[i];
+			ImageTexturInfo _pMapInfo = Resmpinfo.Image[i];
 			WriteResMapInfo WriteResMap;
 			WriteResMap.AnimateDelay = _pMapInfo.AnimateDelay;
-			WriteResMap.x = _pMapInfo.x;
-			WriteResMap.y = _pMapInfo.y;
+			WriteResMap.x = _pMapInfo.x + CreenX;
+			WriteResMap.y = _pMapInfo.y + CreenY;
 			WriteResMap.Height = _pMapInfo.Height;
 			WriteResMap.Width = _pMapInfo.Width;
 			WriteResMap.Scale = _pMapInfo.Scale;
@@ -388,15 +393,15 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 			//写出索引目录名;
 			fwrite(Anim, sizeof(char), szLen, pFile);
 			fflush(pFile);
-			PAnimateImage pMapInfo = Resmpinfo->Image[i].Animate;
-			for (UINT n = 0; n < Resmpinfo->Image[i].AnimateMaxCout; n++) {
-				WriteResMap.AnimateDelay = Resmpinfo->Image[i].AnimateDelay;
-				WriteResMap.x = pMapInfo[n].x;
-				WriteResMap.y = pMapInfo[n].y;
+			PAnimateImage pMapInfo = Resmpinfo.Image[i].Animate;
+			for (UINT n = 0; n < Resmpinfo.Image[i].AnimateMaxCout; n++) {
+				WriteResMap.AnimateDelay = Resmpinfo.Image[i].AnimateDelay;
+				WriteResMap.x = pMapInfo[n].x + CreenX;
+				WriteResMap.y = pMapInfo[n].y + CreenY;
 				WriteResMap.Height = pMapInfo[n].Height;
 				WriteResMap.Width = pMapInfo[n].Width;
 				WriteResMap.Scale = pMapInfo[n].Scale;
-				WriteResMap.ImgLoadType = Resmpinfo->Image[i].ImgLoadType;
+				WriteResMap.ImgLoadType = Resmpinfo.Image[i].ImgLoadType;
 				WriteResMap.ImageDataSize = ResMp[i].Animate[n].ImageDataSize;
 				WriteResMap.ImageOffset = ResMp[i].Animate[n].ImageOffset;
 				WriteResMap.ImageOriginSize = ResMp[i].Animate[n].ImageOriginSize;
@@ -420,7 +425,7 @@ BOOL ResouceDataFile::PackageMap(PMapImageInfo Resmpinfo) {
 			}
 		}
 	}
-	ResMapHeader.IndexNumber = Resmpinfo->MaxImage;
+	ResMapHeader.IndexNumber = IndexNum;
 	fseek(pFile, 0, SEEK_SET);
 	fwrite(&ResMapHeader, sizeof(ResMapHeader), 1, pFile);
 	LocalFree(ResMp);

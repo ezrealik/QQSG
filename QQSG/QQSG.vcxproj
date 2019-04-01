@@ -173,7 +173,7 @@
     <ClInclude Include="ImeInput.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Module.h" />
-    <ClInclude Include="ResourceFile.h" />
+    <ClInclude Include="ResourceFile.hpp" />
     <ClInclude Include="zlib\crc32.h" />
     <ClInclude Include="zlib\deflate.h" />
     <ClInclude Include="zlib\gzguts.h" />

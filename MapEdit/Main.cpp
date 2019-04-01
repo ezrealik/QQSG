@@ -1,19 +1,10 @@
 #include "Main.h"
-#define ThreadMutexLockDeleay 3500
-DirectX92D D2Dx9;
-HWND G_hWnd;
-BOOL DrawThread = TRUE;
-WNDPROC OldDrawWndProc = nullptr, OldEditWndProc = nullptr;
-MapImageInfo ImageInfo = { 0 };
-MouseInfo MousePoint = { 0 };
-HINSTANCE G_hInst;
-HANDLE G_lpDrawThread = nullptr;
+
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
 	G_hInst = hInstance;
 	DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, (DLGPROC)WndProcc, NULL);
 	return 0;
 }
-RECT GlRect, ClRect, lRect;
 BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg)
 	{
@@ -35,9 +26,14 @@ BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		SendMessage(GetDlgItem(hWnd, IDC_COMBO_LoadStyle), CB_ADDSTRING, NULL, (LPARAM)L"图片模式");
 		SendMessage(GetDlgItem(hWnd, IDC_COMBO_LoadStyle), CB_ADDSTRING, NULL, (LPARAM)L"动画模式");
 		SendMessage(GetDlgItem(hWnd, IDC_COMBO_LoadStyle), CB_SETCURSEL, 0, NULL);
+		SetWindowText(GetDlgItem(hWnd, IDC_EDIT_CreenX), L"0");
+		SetWindowText(GetDlgItem(hWnd, IDC_EDIT_CreenY), L"0");
 		if (!D2Dx9.InitD3D(MapHwnd, Width, Height, false)) { MessageBox(hWnd, L"初始化D3D失败!", NULL, MB_OK); ExitProcess(NULL); }
 		OldDrawWndProc = (WNDPROC)SetWindowLong(MapHwnd, GWL_WNDPROC, (LONG)DrawWndProc);
 		OldEditWndProc = (WNDPROC)SetWindowLong(GetDlgItem(hWnd, IDC_EDIT_Scale), GWL_WNDPROC, (LONG)EditScaleWndProc);
+		OldEditDelayWndProc = (WNDPROC)SetWindowLong(GetDlgItem(hWnd, IDC_EDIT_AnimateDelay), GWL_WNDPROC, (LONG)EditAnimateDelayWndProc);
+		SetWindowLong(GetDlgItem(hWnd, IDC_EDIT_CreenX), GWL_WNDPROC, (LONG)EditAnimateDelayWndProc);
+		SetWindowLong(GetDlgItem(hWnd, IDC_EDIT_CreenY), GWL_WNDPROC, (LONG)EditAnimateDelayWndProc);
 		DrawThread = TRUE;
 		//重置坐标原点;
 		GetWindowRect(G_hWnd, &GlRect);
@@ -104,6 +100,9 @@ BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
+		case IDC_BUTTON_ImportMap:
+			CallThreadFunction(ImportMap);
+			break;
 		case IDC_BUTTON_ImageFile:
 			CallThreadFunction(ImportImage);
 			break;
@@ -113,7 +112,8 @@ BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case IDC_BUTTON_PackMap:
 		{
 			ResouceDataFile ResFile;
-			ResFile.PackageMap(&ImageInfo);
+			ResFile.PackageMap(ImageInfo, ImageCreenX, ImageCreenY);
+			//ResouceDataFile::ResMapOInfo *Res = ResFile.GetMapImageInfo("E:\\ProjectCode\\C&C++\\Game\\QQSG\\Debug\\ResMap.map");
 
 		}
 			break;
@@ -146,6 +146,12 @@ BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			break;
 		case ID_MENU_40012:
 			CallThreadFunction(BottomAnimateFrams);
+			break;
+		case ID_MENU_40013:
+			CallThreadFunction(HideImageLayer);
+			break;
+		case ID_MENU_40014:
+			CallThreadFunction(ShowAllHideImageLayer);
 			break;
 		default:
 			break;
@@ -220,9 +226,6 @@ HRESULT CALLBACK DrawWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return CallWindowProc(OldDrawWndProc, hWnd, uMsg, wParam, lParam);
 }
 //D3D绘制线程;
-UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, SelectIndex = 0x8FFFFFF, SelectAnimateIndex = 0x8FFFFFF, CurrencyIndex = 0, UpIndex = 0x8FFFFFF;
-MouseInfo BOMouse;
-BOOL ISMove, IsTip;
 void WINAPI DrawD3D() {
 	while (DrawThread) {
 		LPDIRECT3DDEVICE9 D3DDevice9 = D2Dx9.GetD3Devicex9();
@@ -233,17 +236,18 @@ void WINAPI DrawD3D() {
 			for (UINT i = 0; i < ImageInfo.MaxImage; i++) {
 				if(!ImageInfo.Image)break;
 				//判断是动画帧还是背景图片;
+				if (ImageInfo.Image[i].IsHide)continue;
 				if (ImageInfo.Image[i].ImgLoadType == Image) {
-					if (MousePoint.x - X > ImageInfo.Image[i].x && MousePoint.x + X < ImageInfo.Image[i].x + ImageInfo.Image[i].Width
-						&& MousePoint.y - Y > ImageInfo.Image[i].y && MousePoint.y + Y < ImageInfo.Image[i].y + ImageInfo.Image[i].Height) {
+					if (MousePoint.x - X > ImageInfo.Image[i].x - (float)ImageCreenX && MousePoint.x + X < (ImageInfo.Image[i].x - (float)ImageCreenX) + ImageInfo.Image[i].Width
+						&& MousePoint.y - Y > ImageInfo.Image[i].y - (float)ImageCreenY && MousePoint.y + Y < (ImageInfo.Image[i].y - (float)ImageCreenY) + ImageInfo.Image[i].Height) {
 						if (!ISMove)CurrencyIndex = i;
 					}
 				}
 				//如果是动画帧
 				else if (ImageInfo.Image[i].ImgLoadType == Animate) {
 					PAnimateImage pAnimat = &ImageInfo.Image[i].Animate[ImageInfo.Image[i].AnimateTickIndex];
-					if (MousePoint.x - X > pAnimat->x && MousePoint.x - X < pAnimat->x + pAnimat->Width
-						&& MousePoint.y - Y > pAnimat->y && MousePoint.y - Y < pAnimat->y + pAnimat->Height) {
+					if (MousePoint.x - X > pAnimat->x - (float)ImageCreenX && MousePoint.x - X < (pAnimat->x - (float)ImageCreenX) + pAnimat->Width
+						&& MousePoint.y - Y > (pAnimat->y - (float)ImageCreenY) && MousePoint.y - Y < (pAnimat->y - (float)ImageCreenY) + pAnimat->Height) {
 						if (!ISMove)CurrencyIndex = i;
 					}
 				}
@@ -252,8 +256,8 @@ void WINAPI DrawD3D() {
 			if (ImageInfo.MaxImage > CurrencyIndex) {
 				if (!ImageInfo.Image)continue;
 				if (ImageInfo.Image[CurrencyIndex].ImgLoadType == Image) {
-					if (MousePoint.x - X > ImageInfo.Image[CurrencyIndex].x && MousePoint.x - X < ImageInfo.Image[CurrencyIndex].x + ImageInfo.Image[CurrencyIndex].Width
-						&& MousePoint.y - Y > ImageInfo.Image[CurrencyIndex].y && MousePoint.y - Y < ImageInfo.Image[CurrencyIndex].y + ImageInfo.Image[CurrencyIndex].Height) {
+					if (MousePoint.x - X > ImageInfo.Image[CurrencyIndex].x - (float)ImageCreenX && MousePoint.x + X < (ImageInfo.Image[CurrencyIndex].x - (float)ImageCreenX) + ImageInfo.Image[CurrencyIndex].Width
+						&& MousePoint.y - Y > ImageInfo.Image[CurrencyIndex].y - (float)ImageCreenX && MousePoint.y + Y < (ImageInfo.Image[CurrencyIndex].y - (float)ImageCreenY) + ImageInfo.Image[CurrencyIndex].Height) {
 						if (MousePoint.KeyCode == MK_LBUTTON && MousePoint.KeyState == WM_LBUTTONDOWN) {
 							if (SelectIndex != CurrencyIndex) {
 								//是否高亮选中图片;
@@ -269,22 +273,22 @@ void WINAPI DrawD3D() {
 							ISMove = TRUE;//是否选中一个图片
 							//记录鼠标选中是的坐标点
 							if (BOMouse.OldTick == 0xF841F || BOMouse.OldTick == 0) {
-								BOMouse.x = MousePoint.x - (int)ImageInfo.Image[CurrencyIndex].x;
-								BOMouse.y = MousePoint.y - (int)ImageInfo.Image[CurrencyIndex].y;
+								BOMouse.x = MousePoint.x - (int)(ImageInfo.Image[CurrencyIndex].x - (float)ImageCreenX);
+								BOMouse.y = MousePoint.y - (int)(ImageInfo.Image[CurrencyIndex].y - (float)ImageCreenY);
 								BOMouse.OldTick = 0x6F414;
 							}
 							//根据鼠标移动移动选中图片坐标x;
 							ImageInfo.Image[CurrencyIndex].x = (float)MousePoint.x - BOMouse.x;
 							//限制图片不超出绘制区
-							if (ImageInfo.Image[CurrencyIndex].x < 0)ImageInfo.Image[CurrencyIndex].x = 0;
+							/*if (ImageInfo.Image[CurrencyIndex].x < 0)ImageInfo.Image[CurrencyIndex].x = 0;
 							else if (ImageInfo.Image[CurrencyIndex].x > (lRect.right - lRect.left) - ImageInfo.Image[CurrencyIndex].Width)
-								ImageInfo.Image[CurrencyIndex].x = (float)(lRect.right - lRect.left) - ImageInfo.Image[CurrencyIndex].Width;
+								ImageInfo.Image[CurrencyIndex].x = (float)(lRect.right - lRect.left) - ImageInfo.Image[CurrencyIndex].Width*/;
 							//根据鼠标移动移动选中图片坐标y;
 							ImageInfo.Image[CurrencyIndex].y = (float)MousePoint.y - BOMouse.y;
 							//限制图片不超出绘制区
-							if (ImageInfo.Image[CurrencyIndex].y < 0)ImageInfo.Image[CurrencyIndex].y = 0;
+							/*if (ImageInfo.Image[CurrencyIndex].y < 0)ImageInfo.Image[CurrencyIndex].y = 0;
 							else if (ImageInfo.Image[CurrencyIndex].y > (lRect.bottom - lRect.top) - ImageInfo.Image[CurrencyIndex].Height)
-								ImageInfo.Image[CurrencyIndex].y = (float)(lRect.bottom - lRect.top) - ImageInfo.Image[CurrencyIndex].Height;
+								ImageInfo.Image[CurrencyIndex].y = (float)(lRect.bottom - lRect.top) - ImageInfo.Image[CurrencyIndex].Height;*/
 						}
 						if (MousePoint.KeyCode == MK_RBUTTON && MousePoint.KeyState == WM_RBUTTONDOWN) {
 							if (SelectIndex != CurrencyIndex) {
@@ -303,8 +307,8 @@ void WINAPI DrawD3D() {
 				}
 				else if (ImageInfo.Image[CurrencyIndex].ImgLoadType == Animate) {
 					AnimateImage pAnimat = ImageInfo.Image[CurrencyIndex].Animate[ImageInfo.Image[CurrencyIndex].AnimateTickIndex];
-					if (MousePoint.x - X > pAnimat.x && MousePoint.x - X < pAnimat.x + pAnimat.Width
-						&& MousePoint.y - Y > pAnimat.y && MousePoint.y - Y < pAnimat.y + pAnimat.Height) {
+					if (MousePoint.x - X > pAnimat.x - (float)ImageCreenX && MousePoint.x - X < (pAnimat.x - (float)ImageCreenX) + pAnimat.Width
+						&& MousePoint.y - Y > pAnimat.y - (float)ImageCreenY && MousePoint.y - Y < (pAnimat.y - (float)ImageCreenY) + pAnimat.Height) {
 						if (MousePoint.KeyCode == MK_LBUTTON && MousePoint.KeyState == WM_LBUTTONDOWN) {
 							if (SelectIndex != CurrencyIndex|| SelectAnimateIndex != ImageInfo.Image[CurrencyIndex].AnimateTickIndex) {
 								//是否高亮选中图片;
@@ -392,18 +396,19 @@ void WINAPI DrawD3D() {
 			//绘制所有图片
 			for (UINT i = 0; i < ImageInfo.MaxImage; i++) {
 				if (ImageInfo.Image != nullptr) {
+					if (ImageInfo.Image[i].IsHide)continue;
 					if (ImageInfo.Image[i].ImgLoadType == Image) {
 						//选中图片是否高亮显示
 						if (SendMessage(GetDlgItem(G_hWnd, IDC_CHECK_HeightLight), BM_GETCHECK, 0, 0) == BST_CHECKED) {
 							if (ImageInfo.Image[i].HeightLight)
-								D2Dx9.DrawTexture(ImageInfo.Image[i].Texture, ImageInfo.Image[i].x, ImageInfo.Image[i].y, ImageInfo.Image[i].Width, ImageInfo.Image[i].Height, ImageInfo.Image[i].Scale, 0.0f, D3DCOLOR_XRGB(255, 0, 0));
-							else D2Dx9.DrawTexture(ImageInfo.Image[i].Texture, ImageInfo.Image[i].x, ImageInfo.Image[i].y, ImageInfo.Image[i].Width, ImageInfo.Image[i].Height, ImageInfo.Image[i].Scale);
+								D2Dx9.DrawTexture(ImageInfo.Image[i].Texture, ImageInfo.Image[i].x - (float)ImageCreenX, ImageInfo.Image[i].y - (float)ImageCreenY, ImageInfo.Image[i].Width, ImageInfo.Image[i].Height, ImageInfo.Image[i].Scale, 0.0f, D3DCOLOR_XRGB(255, 0, 0));
+							else D2Dx9.DrawTexture(ImageInfo.Image[i].Texture, ImageInfo.Image[i].x - (float)ImageCreenX, ImageInfo.Image[i].y - (float)ImageCreenY, ImageInfo.Image[i].Width, ImageInfo.Image[i].Height, ImageInfo.Image[i].Scale);
 						}
-						else D2Dx9.DrawTexture(ImageInfo.Image[i].Texture, ImageInfo.Image[i].x, ImageInfo.Image[i].y, ImageInfo.Image[i].Width, ImageInfo.Image[i].Height, ImageInfo.Image[i].Scale);
+						else D2Dx9.DrawTexture(ImageInfo.Image[i].Texture, ImageInfo.Image[i].x - (float)ImageCreenX, ImageInfo.Image[i].y - (float)ImageCreenY, ImageInfo.Image[i].Width, ImageInfo.Image[i].Height, ImageInfo.Image[i].Scale);
 						//选中图片边框是否显示
 						if (SendMessage(GetDlgItem(G_hWnd, IDC_CHECK_IsRectangle), BM_GETCHECK, 0, 0) == BST_CHECKED)
-							D2Dx9.DrawRectagle(ImageInfo.Image[i].x, ImageInfo.Image[i].y, ImageInfo.Image[i].x + ImageInfo.Image[i].Width, ImageInfo.Image[i].y + ImageInfo.Image[i].Height,
-								1.0f, ImageInfo.Image[i].RectAngleColor);
+							D2Dx9.DrawRectagle(ImageInfo.Image[i].x - (float)ImageCreenX, ImageInfo.Image[i].y - (float)ImageCreenY, (ImageInfo.Image[i].x - (float)ImageCreenX) + ImageInfo.Image[i].Width,
+							(ImageInfo.Image[i].y - (float)ImageCreenY) + ImageInfo.Image[i].Height, 1.0f, ImageInfo.Image[i].RectAngleColor);
 					}
 					else if (ImageInfo.Image[i].ImgLoadType == Animate) {
 						if (SendMessage(GetDlgItem(G_hWnd, IDC_CHECK_PlayAnimate), BM_GETCHECK, 0, 0) == BST_CHECKED) {
@@ -416,30 +421,107 @@ void WINAPI DrawD3D() {
 							ImageInfo.Image[i].AnimateTickIndex = 0;
 						}
 						AnimateImage pAnimat = ImageInfo.Image[i].Animate[ImageInfo.Image[i].AnimateTickIndex];
+						float io = pAnimat.x - (float)ImageCreenX;
 						//选中图片是否高亮显示
 						if (SendMessage(GetDlgItem(G_hWnd, IDC_CHECK_HeightLight), BM_GETCHECK, 0, 0) == BST_CHECKED) {
 							if (ImageInfo.Image[i].HeightLight) {
-								D2Dx9.DrawTexture(pAnimat.Texture, pAnimat.x, pAnimat.y, pAnimat.Width, pAnimat.Height, pAnimat.Scale, 0.0f, D3DCOLOR_XRGB(255, 0, 0));
+								D2Dx9.DrawTexture(pAnimat.Texture, pAnimat.x - (float)ImageCreenX, pAnimat.y - (float)ImageCreenY, pAnimat.Width, pAnimat.Height, pAnimat.Scale, 0.0f, D3DCOLOR_XRGB(255, 0, 0));
 							}
-							else D2Dx9.DrawTexture(pAnimat.Texture, pAnimat.x, pAnimat.y, pAnimat.Width, pAnimat.Height, pAnimat.Scale);
+							else D2Dx9.DrawTexture(pAnimat.Texture, pAnimat.x - (float)ImageCreenX, pAnimat.y - (float)ImageCreenY, pAnimat.Width, pAnimat.Height, pAnimat.Scale);
 						}
-						else D2Dx9.DrawTexture(pAnimat.Texture, pAnimat.x, pAnimat.y, pAnimat.Width, pAnimat.Height, pAnimat.Scale);
+						else D2Dx9.DrawTexture(pAnimat.Texture, pAnimat.x - (float)ImageCreenX, pAnimat.y - (float)ImageCreenY, pAnimat.Width, pAnimat.Height, pAnimat.Scale);
 						//选中图片边框是否显示
 						if (SendMessage(GetDlgItem(G_hWnd, IDC_CHECK_IsRectangle), BM_GETCHECK, 0, 0) == BST_CHECKED)
-							D2Dx9.DrawRectagle(pAnimat.x, pAnimat.y, pAnimat.x + pAnimat.Width, pAnimat.y + pAnimat.Height, 1.0f, ImageInfo.Image[i].RectAngleColor);
+							D2Dx9.DrawRectagle(pAnimat.x - (float)ImageCreenX, pAnimat.y - (float)ImageCreenY, (pAnimat.x - (float)ImageCreenX) + pAnimat.Width, 
+								(pAnimat.y - (float)ImageCreenY) + pAnimat.Height, 1.0f, ImageInfo.Image[i].RectAngleColor);
 					}
 				}
 			}
-			//显示绘制帧数;
-			if (OldFpsTick == 0 || GetTickCount() - OldFpsTick > 1100) {
-				OldFpsTick = GetTickCount();
-				NewFPSCount = FPSCount;
-				FPSCount = 0;
+#pragma region 方向键控制图片位置
+			if (GetKeyState(VK_DOWN) & 0x8000) {
+				if (SelectIndex < ImageInfo.MaxImage) {
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						ImageInfo.Image[SelectIndex].y++;
+					}
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
+						ImageInfo.Image[SelectIndex].Animate[ImageInfo.Image[SelectIndex].AnimateTickIndex].y++;
+					}
+				}
 			}
-			else FPSCount++;
-			char FPSOut[50];
-			sprintf(FPSOut, "FPS:%d,X:%dY:%d", NewFPSCount, MousePoint.x, MousePoint.y);
-			D2Dx9.DrawFont(FPSOut, 12, NULL, FALSE, "隶书", &lRect, D3DCOLOR_XRGB(255, 0, 0));
+			if (GetKeyState(VK_UP) & 0x8000) {
+				if (SelectIndex < ImageInfo.MaxImage) {
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						ImageInfo.Image[SelectIndex].y--;
+					}
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
+						ImageInfo.Image[SelectIndex].Animate[ImageInfo.Image[SelectIndex].AnimateTickIndex].y--;
+					}
+				}
+			}
+			if (GetKeyState(VK_LEFT) & 0x8000) {
+				if (SelectIndex < ImageInfo.MaxImage) {
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						ImageInfo.Image[SelectIndex].x--;
+					}
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
+						ImageInfo.Image[SelectIndex].Animate[ImageInfo.Image[SelectIndex].AnimateTickIndex].x--;
+					}
+				}
+			}
+			if (GetKeyState(VK_RIGHT) & 0x8000) {
+				if (SelectIndex < ImageInfo.MaxImage) {
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						ImageInfo.Image[SelectIndex].x++;
+					}
+					if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
+						ImageInfo.Image[SelectIndex].Animate[ImageInfo.Image[SelectIndex].AnimateTickIndex].x++;
+					}
+				}
+			}
+			if (GetKeyState('W') & 0x8000) {
+				ImageCreenY--;
+				char Gr[25];
+				sprintf(Gr, "%d", ImageCreenX);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenX), Gr);
+				sprintf(Gr, "%d", ImageCreenY);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenY), Gr);
+			}
+			if (GetKeyState('S') & 0x8000) {
+				ImageCreenY++;
+				char Gr[25];
+				sprintf(Gr, "%d", ImageCreenX);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenX), Gr);
+				sprintf(Gr, "%d", ImageCreenY);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenY), Gr);
+			}
+			if (GetKeyState('A') & 0x8000) {
+				ImageCreenX--;
+				char Gr[25];
+				sprintf(Gr, "%d", ImageCreenX);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenX), Gr);
+				sprintf(Gr, "%d", ImageCreenY);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenY), Gr);
+			}
+			if (GetKeyState('D') & 0x8000) {
+				ImageCreenX++;
+				char Gr[25];
+				sprintf(Gr, "%d", ImageCreenX);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenX), Gr);
+				sprintf(Gr, "%d", ImageCreenY);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenY), Gr);
+			}
+			if (GetKeyState(VK_SPACE) & 0x8000) {
+				ImageCreenX = 0;
+				ImageCreenY = 0;
+				char Gr[25];
+				sprintf(Gr, "%d", ImageCreenX);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenX), Gr);
+				sprintf(Gr, "%d", ImageCreenY);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenY), Gr);
+			}
+#pragma endregion
+			//D2Dx9.DrawRectagle((lRect.right / 2) - (1024 / 2), (lRect.bottom / 2) - (768 / 2), 1024 + (lRect.right / 2) - (1024 / 2), 768 + (lRect.bottom / 2) - (768 / 2), 2.f, D3DCOLOR_XRGB(255, 0, 0));
+			ShowFPS();
 			D3DDevice9->EndScene();
 			D3DDevice9->Present(NULL, NULL, NULL, NULL);
 			if (IsTip) {
@@ -454,6 +536,8 @@ void WINAPI DrawD3D() {
 					SendMessage(EditHwnd, EM_SETSEL, Strlen, Strlen);
 					sprintf(ImgInfo, "%.2f", ImageInfo.Image[SelectIndex].Scale);
 					SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_Scale), ImgInfo);
+					sprintf(ImgInfo, "%d", ImageInfo.Image[SelectIndex].AnimateDelay);
+					SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_AnimateDelay), ImgInfo);
 					SendMessage(GetDlgItem(G_hWnd, IDC_COMBO_LoadStyle), CB_SETCURSEL, 1, NULL);
 				}
 				else if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
@@ -467,8 +551,14 @@ void WINAPI DrawD3D() {
 					SendMessage(EditHwnd, EM_SETSEL, Strlen, Strlen);
 					sprintf(ImgInfo, "%.2f", pAnimat.Scale);
 					SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_Scale), ImgInfo);
+					sprintf(ImgInfo, "%d", ImageInfo.Image[SelectIndex].AnimateDelay);
+					SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_AnimateDelay), ImgInfo);
 					SendMessage(GetDlgItem(G_hWnd, IDC_COMBO_LoadStyle), CB_SETCURSEL, 0, NULL);
 				}
+				sprintf(ImgInfo, "%d", ImageCreenX);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenX), ImgInfo);
+				sprintf(ImgInfo, "%d", ImageCreenY);
+				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_CreenY), ImgInfo);
 				/*BYTE *Rgb = (BYTE*)&ImageInfo.Image[SelectIndex].RectAngleColor;
 				sprintf(ImgInfo, "%d", Rgb[2]);
 				SetWindowTextA(GetDlgItem(G_hWnd, IDC_EDIT_ColorR), ImgInfo);
@@ -482,6 +572,56 @@ void WINAPI DrawD3D() {
 		else D3DDevice9->EndScene();
 		Sleep(5);
 	}
+}
+//显示fps
+void WINAPI ShowFPS() {
+	//显示绘制帧数;
+	if (OldFpsTick == 0 || GetTickCount() - OldFpsTick > 1100) {
+		OldFpsTick = GetTickCount();
+		NewFPSCount = FPSCount;
+		FPSCount = 0;
+	}
+	else FPSCount++;
+	char FPSOut[50];
+	sprintf(FPSOut, "FPS:%d,X:%dY:%d", NewFPSCount, MousePoint.x, MousePoint.y);
+	D2Dx9.DrawFont(FPSOut, 12, NULL, FALSE, "隶书", &lRect, D3DCOLOR_XRGB(255, 0, 0));
+}
+//图片缩放比例窗口处理函数;
+HRESULT CALLBACK EditAnimateDelayWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	char Buf[50] = { 0 };
+	UINT uDelay;
+	switch (uMsg)
+	{
+	case WM_KEYUP: {
+		if (hWnd == GetDlgItem(G_hWnd, IDC_EDIT_AnimateDelay)) {
+			GetWindowTextA(hWnd, Buf, sizeof(Buf));
+			uDelay = atoi(Buf);
+			if (uDelay > 0) {
+				if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
+					ImageInfo.Image[SelectIndex].AnimateDelay = uDelay;
+				}
+			}
+		}
+		else if (hWnd == GetDlgItem(G_hWnd, IDC_EDIT_CreenX)) {
+			GetWindowTextA(hWnd, Buf, sizeof(Buf));
+			uDelay = atoi(Buf);
+			if (uDelay > 0) {
+				ImageCreenX = uDelay;
+			}
+		}
+		else if (hWnd == GetDlgItem(G_hWnd, IDC_EDIT_CreenY)) {
+			GetWindowTextA(hWnd, Buf, sizeof(Buf));
+			uDelay = atoi(Buf);
+			if (uDelay > 0) {
+				ImageCreenY = uDelay;
+			}
+		}
+		break; 
+	}
+	default:
+		break;
+	}
+	return CallWindowProc(OldEditDelayWndProc, hWnd, uMsg, wParam, lParam);
 }
 //图片缩放比例窗口处理函数;
 HRESULT CALLBACK EditScaleWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -654,6 +794,8 @@ void WINAPI ImportImage() {
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Scale = 1.0f;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
 				ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = Image;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].x = (float)ImageCreenX;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].y = (float)ImageCreenY;
 			}
 			else {
 				void *pAlloc = LocalAlloc(LMEM_ZEROINIT, sizeof(ImageTexturInfo));
@@ -669,6 +811,8 @@ void WINAPI ImportImage() {
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Scale = 1.0f;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
 				ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = Image;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].x = (float)ImageCreenX;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].y = (float)ImageCreenY;
 			}
 		}
 	}
@@ -751,6 +895,8 @@ void WINAPI ImportAnimateImage() {
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].Width = ImgInfo.Width;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].Height = ImgInfo.Height;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].Scale = 1.0f;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].x = (float)ImageCreenX;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].y = (float)ImageCreenY;
 			}
 			else {
 				void *pAnimateAlloc = LocalAlloc(LMEM_ZEROINIT, sizeof(AnimateImage));
@@ -763,6 +909,8 @@ void WINAPI ImportAnimateImage() {
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].Width = ImgInfo.Width;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].Height = ImgInfo.Height;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].Scale = 1.0f;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].x = (float)ImageCreenX;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].Animate[ImageInfo.Image[ImageInfo.MaxImage - 1].AnimateMaxCout - 1].y = (float)ImageCreenY;
 			}
 		}
 	}
@@ -808,6 +956,28 @@ void WINAPI SetUpAnimateFrams() {
 }
 //置下一帧动画;
 void WINAPI SetNextAnimateFrams() {
+
+}
+//隐藏图片图层(不导出图片)
+void WINAPI HideImageLayer() {
+	if (ImageInfo.MaxImage < 1)return;
+	if (SelectIndex > ImageInfo.MaxImage)return;
+	ImageInfo.Image[SelectIndex].IsHide = TRUE;
+}
+//显示所有隐藏图片图层(导出图片)
+void WINAPI ShowAllHideImageLayer() {
+	if (ImageInfo.MaxImage < 1)return;
+	for (UINT i = 0; i < ImageInfo.MaxImage; i++) {
+		ImageInfo.Image[i].IsHide = FALSE;
+	}
+}
+//导入已有地图文件;
+void WINAPI ImportMap() {
+	/*char szPath[MAX_PATH];
+	GetExePathA(szPath, sizeof(szPath));
+	strcat(szPath, "ResMap.map");
+	ResouceDataFile ResFile;
+	ResouceDataFile::ResMapOInfo *Res = ResFile.GetMapImageInfo(szPath);*/
 
 }
 //启动线程

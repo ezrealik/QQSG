@@ -32,6 +32,7 @@ namespace ResouceFile {
 		UINT Height;
 		float Scale;
 		ImageLoadStyle ImgLoadType;
+		BOOL IsHide;
 		LPDIRECT3DTEXTURE9 Texture;
 		PAnimateImage Animate;
 		UINT AnimateTickIndex;
@@ -141,17 +142,18 @@ namespace ResouceFile {
 		ResouceDataFile();
 		~ResouceDataFile();
 		//获取资源包数据索引表(资源包文件名,索引表接收缓冲区)成功返回索引表数量,失败返回0;
-		ResDataIndexInfo *GetResDataIndex(char *FilePath);
+		ResDataIndexInfo *GetResDataIndex(const char *FilePath);
 		//打包资源文件表
-		BOOL PackageResouce(char *FilePath);
+		BOOL PackageResouce(const char *FilePath);
 		//获取资源索引表数量;
 		UINT GetResIndexNumber();
 		//打包地图表;
-		BOOL PackageMap(PMapImageInfo Resmpinfo);
+		BOOL PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UINT CreenY);
 		//获取运行目录(ANSII编码)
 		void GetExePathA(char*dirbuf, int len);
 		//获取打包地图文件表
 		ResMapOInfo* GetMapImageInfo(const char *FilePath);
+		void Release();
 	private:
 		ResDataIndexInfo *GetDataIndexAlloc = nullptr;//全局索引表;
 		int DataIndexNumber = 0;//全局索引表数量;
@@ -159,7 +161,7 @@ namespace ResouceFile {
 		UINT FileCount = 0, MaxCount = 300;//全局资源文件表数,最大文件表数量;
 		ResMapOInfo G_MapImage = { 0 };
 		//截取文件路径;
-		char *GetResDirectory(char*dirbuf, char*sourbuf);
+		char *GetResDirectory(const char*dirbuf, char*sourbuf);
 		//枚举资源文件表文件名;
 		GetAllgpxFilepathFromfolderError GetAllgpxFilepathFromfolder(const char*  Path);
 		//扩大缓冲区

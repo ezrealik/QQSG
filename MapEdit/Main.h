@@ -17,11 +17,28 @@ struct MouseInfo {
 	UINT OldTick;
 };
 #pragma pack(pop)
+#pragma region 全局变量
+#define ThreadMutexLockDeleay 3500
+DirectX92D D2Dx9;
+HWND G_hWnd;
+BOOL DrawThread = TRUE, ISMove, IsTip;
+WNDPROC OldDrawWndProc = nullptr, OldEditWndProc = nullptr, OldEditDelayWndProc = nullptr;
+MapImageInfo ImageInfo = { 0 };
+MouseInfo MousePoint = { 0 };
+HINSTANCE G_hInst;
+HANDLE G_lpDrawThread = nullptr;
+RECT GlRect, ClRect, lRect;
+UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, SelectIndex = 0x8FFFFFF, SelectAnimateIndex = 0x8FFFFFF, CurrencyIndex = 0, UpIndex = 0x8FFFFFF;
+int ImageCreenX = 0, ImageCreenY = 0;
+MouseInfo BOMouse;
+#pragma endregion
 BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //D3D绘制线程;
 void WINAPI DrawD3D();
 //绘制窗口处理函数;
 HRESULT CALLBACK DrawWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+//图片帧数延时窗口处理函数;
+HRESULT CALLBACK EditAnimateDelayWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //图片缩放比例窗口处理函数;
 HRESULT CALLBACK EditScaleWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //删除当前选中图片;
@@ -56,5 +73,13 @@ void WINAPI BottomAnimateFrams();
 void WINAPI SetUpAnimateFrams();
 //置下一帧动画;
 void WINAPI SetNextAnimateFrams();
+//隐藏图片图层(不导出图片)
+void WINAPI HideImageLayer();
+//显示所有隐藏图片图层(导出图片)
+void WINAPI ShowAllHideImageLayer();
+//导入已有地图文件;
+void WINAPI ImportMap();
+//显示FPS;
+void WINAPI ShowFPS();
 //启动线程
 void WINAPI CallThreadFunction(void *FuncAddress);

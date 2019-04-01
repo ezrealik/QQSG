@@ -3,17 +3,22 @@
 #define _Module_H
 #include <Windows.h>
 #include <shlobj.h>
-
-#ifdef _UNICODE
-#define GetExePath GetExePathW
-#define CreateDirectoryEc CreateDirectoryEcW
-#else
-#define GetExePath GetExePathA
-#define CreateDirectoryEc CreateDirectoryEcA
-#endif
-
-void GetExePathW(WCHAR*dirbuf, int len);
-void GetExePathA(char*dirbuf, int len);
-void CreateDirectoryEcA(const char* Dir);
-void CreateDirectoryEcW(const WCHAR* Dir);
+#pragma warning(disable:4996)
+using namespace std;
+class C_Module {
+public:
+	C_Module();
+	~C_Module();
+	const wchar_t *GetExePathW();
+	const char *GetExePathA();
+	const wchar_t *GetCurrencyPathFileW(const WCHAR *FileName);
+	const char *GetCurrencyPathFileA(const char *FileName);
+	int CreateDirectoryEcA(const char* Dir) const;
+	int CreateDirectoryEcW(const WCHAR* Dir) const;
+private:
+	WCHAR szExePathW[MAX_PATH];
+	char szExePathA[MAX_PATH];
+	WCHAR szCurrencyPathW[MAX_PATH];
+	char szCurrencyPathA[MAX_PATH];
+};
 #endif
