@@ -11,10 +11,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	int WinX = (GetSystemMetrics(SM_CXSCREEN) / 2) - (CL_WinWidth / 2),
 		WinY = (GetSystemMetrics(SM_CYSCREEN) / 2) - (CL_WinHeight / 2);
 	if (!RegisterClass(&WinClass))MessageBox(0, L"注册窗口类名失败!", NULL, MB_OK);
-	G_hWnd = CreateWindow(ClassName, L"这是假三国单机版", 
+	G_hWnd = CreateWindow(ClassName, L"萌萌三国单机版-Ver1.21",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		WinX, WinY, CL_WinWidth, CL_WinHeight, NULL, NULL, hInstance, NULL);
-	if (!G_hWnd)MessageBox(0, L"创建窗口失败!", NULL, MB_OK);
+	if (!G_hWnd)MsgTipExit("窗口创建失败!");
 	ShowWindow(G_hWnd, SW_SHOWNORMAL);
 	UpdateWindow(G_hWnd);
 	MSG msg = { 0 };
@@ -33,8 +33,10 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		CoInitialize(nullptr);
 		Ime.SetMaxLen(14);
 		//初始化程序;
-		if (!D2Dx9.InitD3D(hWnd, CL_WinWidth, CL_WinHeight, false)) { MessageBox(hWnd, L"初始化D3D失败!", nullptr, MB_OK); ExitProcess(NULL); }
-		if (!BASS_Init(-1, 44100, BASS_DEVICE_3D, hWnd, NULL)) { MessageBox(hWnd, L"初始化BASS音频库失败!", nullptr, MB_OK); ExitProcess(NULL); }
+		RECT ClRect;
+		GetClientRect(hWnd, &ClRect);
+		if (!D2Dx9.InitD3D(hWnd, ClRect.right - ClRect.left, ClRect.bottom - ClRect.top, false)) MsgTipExit("初始化D3D失败!");
+		if (!BASS_Init(-1, 44100, BASS_DEVICE_3D, hWnd, NULL)) MsgTipExit("初始化BASS音频库失败!");
 		LPDIRECT3DDEVICE9 D3DDevice9 = D2Dx9.GetD3Devicex9();
 		D3DDevice9->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 		D3DDevice9->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
@@ -42,8 +44,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		D3DDevice9->SetSamplerState(0, D3DSAMP_MAXANISOTROPY, 8);
 		//播放BGM;
 		PlayerBGM_Login("Login1.mp3");
-		//CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)InitDrawCreatePlayer, NULL, NULL, NULL);
-		InitDrawCreatePlayer();
+		MousePoint.OldTick = GetTickCount();
+		ImeTick = GetTickCount();
 		CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)D3DGameRun, NULL, NULL, NULL);
 		break;
 	}
@@ -65,21 +67,25 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		break;
 	case WM_LBUTTONDOWN:
 		MousePoint.KeyCode = wParam;
+		MousePoint.KeyState = WM_LBUTTONDOWN;
 		MousePoint.x = GET_X_LPARAM(lParam);
 		MousePoint.y = GET_Y_LPARAM(lParam);
 		break;
 	case WM_RBUTTONDOWN:
 		MousePoint.KeyCode = wParam;
+		MousePoint.KeyState = WM_RBUTTONDOWN;
 		MousePoint.x = GET_X_LPARAM(lParam);
 		MousePoint.y = GET_Y_LPARAM(lParam);
 		break;
 	case WM_LBUTTONUP:
 		MousePoint.KeyCode = wParam;
+		MousePoint.KeyState = WM_LBUTTONUP;
 		MousePoint.x = GET_X_LPARAM(lParam);
 		MousePoint.y = GET_Y_LPARAM(lParam);
 		break;
 	case WM_RBUTTONUP:
 		MousePoint.KeyCode = wParam;
+		MousePoint.KeyState = WM_RBUTTONUP;
 		MousePoint.x = GET_X_LPARAM(lParam);
 		MousePoint.y = GET_Y_LPARAM(lParam);
 		break;
@@ -130,13 +136,13 @@ UINT LoadResourceData(const char *pFile, const char *pResName, void **pAlloc){
 		if (strcmp((char*)ResFa[i].pFileName, pResName) == 0) {
 			//申请内存音频流缓冲区
 			Result = LocalAlloc(LMEM_ZEROINIT, ResFa[i].pOriginSize);
-			if (!Result) { MessageBox(0, L"内存不足!", nullptr, MB_OK); ExitProcess(NULL); }
+			if (!Result) MsgTipExit("申请内存失败,内存不足!");
 			//申请临时解压内存音频流缓冲区;
 			void *TmpAlloc = LocalAlloc(LMEM_ZEROINIT, ResFa[i].pDataSize);
-			if (!TmpAlloc) { MessageBox(0, L"内存不足!", nullptr, MB_OK); ExitProcess(NULL); }
+			if (!TmpAlloc) MsgTipExit("申请内存失败,内存不足!");
 			//读取音频流数据存入内存
 			FILE *pFile = fopen(path, "rb");
-			if (!pFile) { MessageBox(0, L"资源打开失败,请确认文件是否损坏!", nullptr, MB_OK); ExitProcess(NULL); }
+			if (!pFile)MsgTipExit("资源打开失败,请确认文件是否损坏!");
 			fseek(pFile, ResFa[i].pOffset, SEEK_SET);
 			fread(TmpAlloc, ResFa[i].pDataSize, 1, pFile);
 			UnzipLen = ResFa[i].pOriginSize;
@@ -151,14 +157,15 @@ UINT LoadResourceData(const char *pFile, const char *pResName, void **pAlloc){
 	*pAlloc = Result;
 	return UnzipLen;
 }
+//释放加载的资源文件;
+void ReleaseResourceData(void *pAlloc) {
+	LocalFree(pAlloc);
+}
 //播放登录背景音乐
 void PlayerBGM_Login(const char *MusicName) {
 	UINT UnzipLen = LoadResourceData("Music.db", MusicName, &BGM_Login1);
 	StreamBGM1 = BASS_StreamCreateFile(TRUE, BGM_Login1, 0, UnzipLen, BASS_SAMPLE_LOOP);
-	if (!StreamBGM1) {
-		MessageBox(0, L"音频打开失败,请确认资源文件是否损坏!", nullptr, MB_OK);
-		ExitProcess(NULL);
-	}
+	if (!StreamBGM1)MsgTipExit("音频打开失败,请确认资源文件是否损坏!");
 	//播放音频
 	BASS_ChannelPlay(StreamBGM1, TRUE);
 }
@@ -196,7 +203,7 @@ void ShowFPS() {
 	else FPSCount++;
 	char FPSOut[50];
 	sprintf(FPSOut, "FPS:%d", NewFPSCount);
-	RECT lrect = { CL_WinWidth - 60,10,CL_WinWidth,50 };
+	RECT lrect = { CL_WinWidth - 80,10,CL_WinWidth,50 };
 	D2Dx9.DrawFont(FPSOut, 12, NULL, FALSE, "隶书", &lrect, D3DCOLOR_XRGB(0, 250, 0));
 }
 //绘制提示框;
@@ -241,7 +248,7 @@ void DrawTipBox() {
 //地图资源加载;
 void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInfo &pMapAlloc, UINT pLen, const char*pMapFile) {
 	FILE *pFile = fopen(pMapFile, "rb");
-	if (!pFile) { MessageBox(0, L"资源包加载失败!", NULL, MB_OK); ExitProcess(NULL); }
+	if (!pFile)MsgTipExit("程序加载资源出现未知错误!");
 	for (UINT i = 0; i < ResMpIOinfo->MaxCount; i++) {
 		ReadResMapInfo mpinf = ResMpIOinfo->Mapinfo[i];
 		PDrawMapInfo DrawMp = &pMapAlloc.DrawMap[i];
@@ -258,32 +265,32 @@ void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInf
 		DrawMp->AnimateTickIndex = 0;
 		if (mpinf.ImgLoadType == Image) {
 			Bytef *pUnzipAlloc = (Bytef*)LocalAlloc(LMEM_ZEROINIT, mpinf.ImageOriginSize);
-			if (!pUnzipAlloc) { MessageBox(0, L"申请内存失败,内存不足!", NULL, MB_OK); ExitProcess(NULL); }
+			if (!pUnzipAlloc) MsgTipExit("程序加载资源出现未知错误!");
 			Bytef *pDataAlloc = (Bytef*)LocalAlloc(LMEM_ZEROINIT, mpinf.ImageDataSize);
-			if (!pDataAlloc) { MessageBox(0, L"申请内存失败,内存不足!", NULL, MB_OK); ExitProcess(NULL); }
+			if (!pDataAlloc) MsgTipExit("程序加载资源出现未知错误!");
 			fseek(pFile, mpinf.ImageOffset, SEEK_SET);
 			fread(pDataAlloc, 1, mpinf.ImageDataSize, pFile);
 			UINT UnzipLen = mpinf.ImageOriginSize;
 			uncompress(pUnzipAlloc, (uLongf*)&UnzipLen, pDataAlloc, mpinf.ImageDataSize);
-			DrawMp->Texture = D2Dx9.LoadMemTexture(pUnzipAlloc, UnzipLen);
+			DrawMp->Texture = D2Dx9.LoadMemTexture(pUnzipAlloc, UnzipLen, D3DCOLOR_XRGB(255, 0, 0));
 			DrawMp->ResAlloc = pUnzipAlloc;
 			LocalFree(pDataAlloc);
 		}
 		else if (mpinf.ImgLoadType == Animate) {
 			DrawMp->Animate = (PDrawMapInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(DrawMapInfo)*mpinf.AnimateCount);
-			if (!DrawMp->Animate) { MessageBox(0, L"申请内存失败,内存不足!", NULL, MB_OK); ExitProcess(NULL); }
+			if (!DrawMp->Animate)MsgTipExit("程序加载资源出现未知错误!");
 			for (UINT n = 0; n < mpinf.AnimateCount; n++) {
 				ReadResMapInfo Anminf = mpinf.Animate[n];
 				PDrawMapInfo DrawMpAnimate = DrawMp->Animate;
 				Bytef *pUnzipAlloc = (Bytef*)LocalAlloc(LMEM_ZEROINIT, Anminf.ImageOriginSize);
-				if (!pUnzipAlloc) { MessageBox(0, L"申请内存失败,内存不足!", NULL, MB_OK); ExitProcess(NULL); }
+				if (!pUnzipAlloc)MsgTipExit("程序加载资源出现未知错误!");
 				Bytef *pDataAlloc = (Bytef*)LocalAlloc(LMEM_ZEROINIT, Anminf.ImageDataSize);
-				if (!pDataAlloc) { MessageBox(0, L"申请内存失败,内存不足!", NULL, MB_OK); ExitProcess(NULL); }
+				if (!pDataAlloc)MsgTipExit("程序加载资源出现未知错误!");
 				fseek(pFile, Anminf.ImageOffset, SEEK_SET);
 				fread(pDataAlloc, 1, Anminf.ImageDataSize, pFile);
 				UINT UnzipLen = Anminf.ImageOriginSize;
 				uncompress(pUnzipAlloc, (uLongf*)&UnzipLen, pDataAlloc, Anminf.ImageDataSize);
-				DrawMpAnimate[n].Texture = D2Dx9.LoadMemTexture(pUnzipAlloc, Anminf.ImageOriginSize);
+				DrawMpAnimate[n].Texture = D2Dx9.LoadMemTexture(pUnzipAlloc, Anminf.ImageOriginSize, D3DCOLOR_XRGB(255, 0, 0));
 				DrawMpAnimate[n].ResAlloc = pUnzipAlloc;
 				DrawMpAnimate[n].x = Anminf.x;
 				DrawMpAnimate[n].y = Anminf.y;
@@ -318,33 +325,150 @@ void ReleaseMapResource(DrawImageInfo &PMapImageInfo) {
 	LocalFree(PMapImageInfo.DrawMap);
 	PMapImageInfo = { 0 };
 }
+//判断鼠标是否在选区内
+BOOL IsRectMouse(float x, float y, UINT Width, UINT Height, MouseInfo const&MousePoint) {
+	float mX = 0.f, mY = 0.f;
+	if (MousePoint.x - mX > x && MousePoint.x - mX < x + (float)Width && MousePoint.y - mY > y && MousePoint.y - mY < y + (float)Height) {
+		return TRUE;
+	}
+	return FALSE;
+}
 //初始化绘制创建玩家资源;
 void InitDrawCreatePlayer() {
 	C_Module Mod;
 	const char *szPath = Mod.GetCurrencyPathFileA("创建角色背景.map");
 	ResouceDataFile Resdatfile;
 	ResouceDataFile::ResMapOInfo *MpImginfo = Resdatfile.GetMapImageInfo(szPath);
-	if (!MpImginfo) { MessageBox(0, L"程序加载资源出现未知!", NULL, MB_OK); ExitProcess(NULL); }
-	if (CreatePlayerImgInfo.MaxInt > 0) { MessageBox(0, L"程序加载资源出现未知!", NULL, MB_OK); ExitProcess(NULL); }
+	if (!MpImginfo) MsgTipExit("程序加载资源出现未知错误!");
+	if (CreatePlayerImgInfo.MaxInt > 0)MsgTipExit("程序加载资源出现未知错误!");
 	UINT MaxAllocLen = sizeof(DrawMapInfo)*MpImginfo->MaxCount;
 	CreatePlayerImgInfo.DrawMap = (PDrawMapInfo)LocalAlloc(LMEM_ZEROINIT, MaxAllocLen);
 	CreatePlayerImgInfo.MaxInt = MpImginfo->MaxCount;
-	if(!CreatePlayerImgInfo.DrawMap) { MessageBox(0, L"申请内存失败,内存不足!", NULL, MB_OK); ExitProcess(NULL); }
+	if(!CreatePlayerImgInfo.DrawMap) MsgTipExit("申请内存失败,内存不足!");
 	LoadMapResourceData(MpImginfo, CreatePlayerImgInfo, MaxAllocLen, szPath);
 	//加载人物动画;
 	Resdatfile.Release();
-	szPath = Mod.GetCurrencyPathFileA("nv-yx.map");
+	PlayerChange("nv-yy.map", CreatePlayer);
+	//加载按钮;
+	ClButton.MaxButton = 11;
+	MaxAllocLen = sizeof(ButtonImageInfo) * ClButton.MaxButton;
+	ClButton.Button = (PButtonImageInfo)LocalAlloc(LMEM_ZEROINIT, MaxAllocLen);
+	if (!ClButton.Button) MsgTipExit("申请内存失败,内存不足!");
+#pragma region 按钮初始化;
+	//职业选择按钮;
+	char szFile[5][2][50] = { "阴阳士-1.bmp","阴阳士-2.bmp",
+		"剑侍-1.bmp","剑侍-2.bmp","豪杰-1.bmp","豪杰-2.bmp",
+		"仙术士-1.bmp","仙术士-2.bmp","游侠-1.bmp","游侠-2.bmp"
+	};
+	for (UINT t = 0; t < 5; t++) {
+		PButtonImageInfo pButon = &ClButton.Button[t];
+		pButon->ButtonType = Button_Duo;
+		pButon->ButtonNum = 2;
+		pButon->MultiButton = (PButtonImageInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ButtonImageInfo) * pButon->ButtonNum);
+		if (!pButon->MultiButton)MsgTipExit("申请内存失败,内存不足!");
+		pButon->SelectIndex = 0;
+		for (UINT i = 0; i < pButon->ButtonNum; i++) {
+			pButon->MultiButton[i].x = (float)(CL_WinWidth / 2) - 200 + (t * 80);
+			pButon->MultiButton[i].y = (float)CL_WinHeight - 150;
+			void *pAl;
+			UINT pAllen = LoadResourceData("ResData.db", szFile[t][i], &pAl);
+			if (pAllen < 0xFF)MsgTipExit("加载资源失败,请确认资源包是否损坏!");
+			D3DXIMAGE_INFO info = D2Dx9.GetImageInfoInMemory(pAl, pAllen);
+			pButon->MultiButton[i].Width = info.Width;
+			pButon->MultiButton[i].Height = info.Height;
+			pButon->MultiButton[i].Texture = D2Dx9.LoadMemTexture(pAl, pAllen);
+		}
+	}
+	ClButton.Button[0].SelectIndex = 1;
+	//开始游戏按钮;
+	char szStartGame[3][50] = { "开始游戏-2.bmp","开始游戏-3.bmp" ,"开始游戏-1.bmp" };
+	PButtonImageInfo pButon = &ClButton.Button[5];
+	pButon->ButtonType = Button_Duo;
+	pButon->ButtonNum = 3;
+	pButon->MultiButton = (PButtonImageInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ButtonImageInfo) * pButon->ButtonNum);
+	if (!pButon->MultiButton)MsgTipExit("申请内存失败,内存不足!");
+	pButon->SelectIndex = 0;
+	for (UINT i = 0; i < pButon->ButtonNum; i++) {
+		pButon->MultiButton[i].x = (float)(CL_WinWidth / 2) +100;
+		pButon->MultiButton[i].y = (float)CL_WinHeight - 75;
+		void *pAl;
+		UINT pAllen = LoadResourceData("ResData.db", szStartGame[i], &pAl);
+		if (pAllen < 0xFF)MsgTipExit("加载资源失败,请确认资源包是否损坏!");
+		D3DXIMAGE_INFO info = D2Dx9.GetImageInfoInMemory(pAl, pAllen);
+		pButon->MultiButton[i].Width = info.Width;
+		pButon->MultiButton[i].Height = info.Height;
+		pButon->MultiButton[i].Texture = D2Dx9.LoadMemTexture(pAl, pAllen);
+	}
+	//国家选择按钮;
+	char szGuoFile[3][2][50] = { "魏-1.bmp","魏-2.bmp",
+		"吴-1.bmp","吴-2.bmp","蜀-1.bmp","蜀-2.bmp",
+	};
+	for (UINT t = 6; t < 9; t++) {
+		PButtonImageInfo pButon = &ClButton.Button[t];
+		pButon->ButtonType = Button_Duo;
+		pButon->ButtonNum = 2;
+		pButon->MultiButton = (PButtonImageInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ButtonImageInfo) * pButon->ButtonNum);
+		if (!pButon->MultiButton)MsgTipExit("申请内存失败,内存不足!");
+		pButon->SelectIndex = 0;
+		for (UINT i = 0; i < pButon->ButtonNum; i++) {
+			pButon->MultiButton[i].x = (float)CL_WinWidth - 180 + ((t - 6) * 45);
+			pButon->MultiButton[i].y = (float)35;
+			void *pAl;
+			UINT pAllen = LoadResourceData("ResData.db", szGuoFile[t - 6][i], &pAl);
+			if (pAllen < 0xFF)MsgTipExit("加载资源失败,请确认资源包是否损坏!");
+			D3DXIMAGE_INFO info = D2Dx9.GetImageInfoInMemory(pAl, pAllen);
+			pButon->MultiButton[i].Width = info.Width;
+			pButon->MultiButton[i].Height = info.Height;
+			pButon->MultiButton[i].Texture = D2Dx9.LoadMemTexture(pAl, pAllen);
+		}
+	}
+	ClButton.Button[6].SelectIndex = 1;
+	//性别选择按钮;
+	char szWmFile[2][2][50] = { "男-1.bmp","男-2.bmp","女-1.bmp","女-2.bmp"};
+	for (UINT t = 9; t < 11; t++) {
+		PButtonImageInfo pButon = &ClButton.Button[t];
+		pButon->ButtonType = Button_Duo;
+		pButon->ButtonNum = 2;
+		pButon->MultiButton = (PButtonImageInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ButtonImageInfo) * pButon->ButtonNum);
+		if (!pButon->MultiButton)MsgTipExit("申请内存失败,内存不足!");
+		pButon->SelectIndex = 0;
+		for (UINT i = 0; i < pButon->ButtonNum; i++) {
+			pButon->MultiButton[i].x = (float)CL_WinWidth - 180 + ((t - 9) * 80);
+			pButon->MultiButton[i].y = (float)90;
+			void *pAl;
+			UINT pAllen = LoadResourceData("ResData.db", szWmFile[t - 9][i], &pAl);
+			if (pAllen < 0xFF)MsgTipExit("加载资源失败,请确认资源包是否损坏!");
+			D3DXIMAGE_INFO info = D2Dx9.GetImageInfoInMemory(pAl, pAllen);
+			pButon->MultiButton[i].Width = info.Width;
+			pButon->MultiButton[i].Height = info.Height;
+			pButon->MultiButton[i].Texture = D2Dx9.LoadMemTexture(pAl, pAllen);
+		}
+	}
+	ClButton.Button[10].SelectIndex = 1;
+#pragma endregion
+
+}
+//绘制播放职业玩家;
+void PlayerChange(const char *pMapFile, DrawImageInfo &pMapAlloc) {
+	ReleaseMapResource(pMapAlloc);
+	//加载人物动画;
+	C_Module Mod;
+	ResouceDataFile Resdatfile;
+	ResouceDataFile::ResMapOInfo *MpImginfo = nullptr;
+	const char *szPath = Mod.GetCurrencyPathFileA(pMapFile);
 	MpImginfo = Resdatfile.GetMapImageInfo(szPath);
-	if (!MpImginfo) { MessageBox(0, L"程序加载资源出现未知!", NULL, MB_OK); ExitProcess(NULL); }
-	if (CreatePlayer.MaxInt > 0) { MessageBox(0, L"程序加载资源出现未知!", NULL, MB_OK); ExitProcess(NULL); }
-	MaxAllocLen = sizeof(DrawMapInfo)*MpImginfo->MaxCount;
-	CreatePlayer.DrawMap = (PDrawMapInfo)LocalAlloc(LMEM_ZEROINIT, MaxAllocLen);
-	CreatePlayer.MaxInt = MpImginfo->MaxCount;
-	LoadMapResourceData(MpImginfo, CreatePlayer, MaxAllocLen, szPath);
-	
+	if (!MpImginfo) MsgTipExit("程序加载资源出现未知错误!");
+	if (pMapAlloc.MaxInt > 0) MsgTipExit("程序加载资源出现未知错误!");
+	UINT MaxAllocLen = sizeof(DrawMapInfo) * MpImginfo->MaxCount;
+	pMapAlloc.DrawMap = (PDrawMapInfo)LocalAlloc(LMEM_ZEROINIT, MaxAllocLen);
+	pMapAlloc.MaxInt = MpImginfo->MaxCount;
+	LoadMapResourceData(MpImginfo, pMapAlloc, MaxAllocLen, szPath);
 }
 //绘制玩家角色创建;
 void DrawCreatePlayer() {
+	//判断是否初始化过;
+	if (CreatePlayer.DrawMap == nullptr && CreatePlayer.MaxInt < 1 && CreatePlayerImgInfo.DrawMap == nullptr && CreatePlayerImgInfo.MaxInt < 1)InitDrawCreatePlayer();
+	//绘制显示UI;
 	for (UINT i = 0; i < CreatePlayerImgInfo.MaxInt; i++) {
 		PDrawMapInfo DrwMp = &CreatePlayerImgInfo.DrawMap[i];
 		if (DrwMp->ImgLoadType == Image) {
@@ -370,11 +494,141 @@ void DrawCreatePlayer() {
 			if (GetTickCount() - DrwMp->AnimateOldTick > DrwMp->AnimateDelay) {
 				DrwMp->AnimateTickIndex++;
 				DrwMp->AnimateOldTick = GetTickCount();
-				if (DrwMp->AnimateTickIndex >= DrwMp->AnimateMaxCount)
+				if (DrwMp->AnimateTickIndex >= DrwMp->AnimateMaxCount) {
 					DrwMp->AnimateTickIndex = 0;
+				}
 			}
 			DrawMapInfo DrwMpAn = DrwMp->Animate[DrwMp->AnimateTickIndex];
 			D2Dx9.DrawTexture(DrwMpAn.Texture, DrwMpAn.x, DrwMpAn.y, DrwMpAn.width, DrwMpAn.height, DrwMpAn.Scale, DrwMpAn.rotation);
 		}
 	}
+	for (UINT i = 0; i < ClButton.MaxButton; i++) {
+		if (ClButton.Button[i].ButtonType == Button_Dan) {
+
+		}
+		else if (ClButton.Button[i].ButtonType == Button_Duo) {
+			ButtonImageInfo &pButon = ClButton.Button[i].MultiButton[ClButton.Button[i].SelectIndex];
+			if (IsRectMouse(pButon.x, pButon.y, pButon.Width, pButon.Height, MousePoint)) {
+				if (MousePoint.KeyState == WM_LBUTTONDOWN) {
+					switch (i)
+					{
+					//0-4职业按钮
+					//5开始游戏按钮
+					//6-8国家选择按钮
+					//9-10性别选择按钮
+					case 0:
+						for (UINT i = 0; i < 5; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						if (GetTickCount() - MousePoint.OldTick > 300) {
+							if (ClButton.Button[10].SelectIndex == 1)PlayerChange("nv-yy.map", CreatePlayer);
+							else PlayerChange("nan-yy.map", CreatePlayer);
+							strcpy(szCareerTip, "        阴阳士\r\n\r\n远程,术攻,高攻,施法慢");
+						}
+						break;
+					case 1:
+						for (UINT i = 0; i < 5; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						if (GetTickCount() - MousePoint.OldTick > 300) {
+							if (ClButton.Button[10].SelectIndex == 1)PlayerChange("nv-js.map", CreatePlayer);
+							else PlayerChange("nan-js.map", CreatePlayer);
+							strcpy(szCareerTip, "        剑侍\r\n\r\n近战,物理,平均,攻速快");
+						}
+						break;
+					case 2:
+						for (UINT i = 0; i < 5; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						if (GetTickCount() - MousePoint.OldTick > 300) {
+							if (ClButton.Button[10].SelectIndex == 1)PlayerChange("nv-hj.map", CreatePlayer);
+							else PlayerChange("nan-hj.map", CreatePlayer);
+							strcpy(szCareerTip, "        豪杰\r\n\r\n近战,物理,高防,坦克肉");
+						}
+						break;
+					case 3:
+						for (UINT i = 0; i < 5; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						if (GetTickCount() - MousePoint.OldTick > 300) {
+							if (ClButton.Button[10].SelectIndex == 1)PlayerChange("nv-xs.map", CreatePlayer);
+							else PlayerChange("nan-xs.map", CreatePlayer);
+							strcpy(szCareerTip, "        仙术士\r\n\r\n远程,术攻,治疗,施法中");
+						}
+						break;
+					case 4:
+						for (UINT i = 0; i < 5; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						if (GetTickCount() - MousePoint.OldTick > 300) {
+							if (ClButton.Button[10].SelectIndex == 1)PlayerChange("nv-yx.map", CreatePlayer);
+							else PlayerChange("nan-yx.map", CreatePlayer);
+							strcpy(szCareerTip, "        游侠\r\n\r\n远程,物理,高攻,脆皮鸡");
+						}
+						break;
+					case 5:
+						ClButton.Button[i].SelectIndex = 2;
+						break;
+					case 6:
+						for (UINT i = 6; i < 9; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						break;
+					case 7:
+						for (UINT i = 6; i < 9; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						break;
+					case 8:
+						for (UINT i = 6; i < 9; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						break;
+					case 9:
+						for (UINT i = 9; i < 11; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						break;
+					case 10:
+						for (UINT i = 9; i < 11; i++) {
+							ClButton.Button[i].SelectIndex = 0;
+						}
+						ClButton.Button[i].SelectIndex = 1;
+						break;
+					default:
+						break;
+					}
+				}
+				else {
+					if (i == 5)ClButton.Button[i].SelectIndex = 1;
+				}
+			}
+			else {
+				if (i == 5)ClButton.Button[i].SelectIndex = 0;
+			}
+			//D2Dx9.DrawRectagle(pButon.x, pButon.y, pButon.x + pButon.Width, pButon.y + pButon.Height, 1.f, D3DCOLOR_XRGB(255, 0, 0));
+			D2Dx9.DrawTexture(pButon.Texture, pButon.x, pButon.y, pButon.Width, pButon.Height);
+		}
+	}
+	//绘制输入框;
+	Ime.GetIMEString(G_hWnd);
+	string imestr = Ime.GetImeString();
+	float ImeX = (CL_WinWidth / 2) - 60, ImeY = CL_WinHeight - 50;
+	if (GetTickCount() - ImeTick > 1000) {
+		if (GetTickCount() - ImeTick > 1800)ImeTick = GetTickCount();
+	}
+	else D2Dx9.DrawLineto(ImeX + (float)(imestr.length() * 8), ImeY - 15.f, ImeX + (imestr.length() * 8), ImeY, 1.f, D3DCOLOR_XRGB(255, 255, 255));
+	RECT lFontRect = { (LONG)ImeX, (LONG)(ImeY - 18.f), CL_WinWidth,CL_WinHeight };
+	D2Dx9.DrawTextFont(imestr.c_str(), 16, 1, FALSE, "隶书", &lFontRect);
+	RECT lCareerRect = { CL_WinWidth - 180, 250, CL_WinWidth,CL_WinHeight };
+	D2Dx9.DrawTextFont(szCareerTip, 12, 1, FALSE, "楷体", &lCareerRect, D3DCOLOR_XRGB(255, 255, 255));
 }

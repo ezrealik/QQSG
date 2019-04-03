@@ -28,7 +28,8 @@ MouseInfo MousePoint = { 0 };
 HINSTANCE G_hInst;
 HANDLE G_lpDrawThread = nullptr;
 RECT GlRect, ClRect, lRect;
-UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, SelectIndex = 0x8FFFFFF, SelectAnimateIndex = 0x8FFFFFF, CurrencyIndex = 0, UpIndex = 0x8FFFFFF;
+UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, SelectIndex = 0x8FFFFFF, SelectAnimateIndex = 0x8FFFFFF, CurrencyIndex = 0, UpIndex = 0x8FFFFFF,
+OldKeyTick = 0;
 int ImageCreenX = 0, ImageCreenY = 0;
 MouseInfo BOMouse;
 #pragma endregion

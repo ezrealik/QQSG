@@ -96,7 +96,12 @@ void ImeInput::GetIMEString(HWND hWnd)
 				WideCharToMultiByte(ChineseSimpleAcp, 0, lpWideStr, -1, pszMultiByte, iSize, NULL, NULL);//宽字节转换	
 				pszMultiByte[iSize] = '\0';
 				ImeStr += pszMultiByte;//添加到string中	
-									//释放空间	
+				while(ImeStr.length() > MaxLen) {
+					if (ImeStr.at(ImeStr.length() - 1) & 0x8000)
+						ImeStr.erase(ImeStr.end() - 1);
+					ImeStr.erase(ImeStr.end() - 1);
+				}
+				//释放空间	
 				if (lpWideStr)
 				{
 					delete[]lpWideStr;
@@ -113,4 +118,7 @@ void ImeInput::GetIMEString(HWND hWnd)
 		ImmDestroyContext(hIMC);
 		ImmReleaseContext(hWnd, hIMC);//释放HIMC	
 	}
+}
+UINT ImeInput::GetImeLen() {
+	return ImeStr.length();
 }

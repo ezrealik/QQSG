@@ -45,3 +45,7 @@ const char *C_Module::GetCurrencyPathFileA(const char* Dir) {
 	strcat(szCurrencyPathA, Dir);
 	return szCurrencyPathA;
 }
+void MsgTipExit(const char *pTip){
+	MessageBoxA(NULL, pTip, "Error:", MB_OK | MB_ICONERROR);
+	ExitProcess(NULL);
+}

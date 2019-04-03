@@ -10,11 +10,11 @@
 #pragma warning(disable:4996)
 namespace ResouceFile {
 	//全局数据结构
-	enum ImageLoadStyle {
+	typedef enum _ImageLoadStyle {
 		Image = 0xF1,
 		Animate = 0xF2,
 		Button = 0xF3,
-	};
+	}ImageLoadStyle;
 	typedef struct _AnimateImage {
 		float x;
 		float y;
@@ -62,6 +62,17 @@ namespace ResouceFile {
 		UINT AnimateCount;
 		_ReadResMapInfo *Animate;
 	}ReadResMapInfo, *PReadResMapInfo;
+	class ResourceAlloc {
+	public:
+		ResourceAlloc();
+		~ResourceAlloc();
+		void Release();
+		UINT GetLenth();
+		UINT GetFileCount();
+	private:
+		void *pAlloc = nullptr;
+
+	};
 	//资源数据操作类
 	class  ResouceDataFile
 	{
@@ -166,7 +177,7 @@ namespace ResouceFile {
 		GetAllgpxFilepathFromfolderError GetAllgpxFilepathFromfolder(const char*  Path);
 		//扩大缓冲区
 		void* AmplifyIndexArray(UINT MaxCount);
-
+		ResourceAlloc pResAlloc;
 	};
 }
 #endif

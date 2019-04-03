@@ -491,3 +491,19 @@ ResouceDataFile::ResMapOInfo* ResouceDataFile::GetMapImageInfo(const char *FileP
 	return &G_MapImage;
 }
 
+//地图信息类;
+ResourceAlloc::ResourceAlloc(){
+
+}
+ResourceAlloc::~ResourceAlloc() {
+
+}
+void ResourceAlloc::Release() {
+
+}
+UINT ResourceAlloc::GetLenth() {
+
+}
+UINT ResourceAlloc::GetFileCount() {
+
+}

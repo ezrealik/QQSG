@@ -19,14 +19,12 @@ struct MouseInfo {
 	int x;
 	int y;
 	int KeyCode;
+	int KeyState;
+	UINT OldTick;
 };
-enum GameMaskLayer {
-	Top,
-	First,
-	Second,
-	Third,
-	Four,
-	Bottom,
+enum _ButtonType {
+	Button_Dan = 0x61,
+	Button_Duo = 0x62,
 };
 typedef struct _DrawMapInfo
 {
@@ -36,7 +34,7 @@ typedef struct _DrawMapInfo
 	UINT height;
 	float Scale;
 	float rotation;
-	UINT ImgLoadType;
+	ImageLoadStyle ImgLoadType;
 	LPDIRECT3DTEXTURE9 Texture;
 	void *ResAlloc;
 	_DrawMapInfo *Animate;
@@ -50,11 +48,28 @@ typedef struct _DrawImageInfo
 	PDrawMapInfo DrawMap;
 	UINT MaxInt;
 }DrawImageInfo, *PDrawImageInfo;
+typedef struct _ButtonImageInfo{
+	float x;
+	float y;
+	UINT Width;
+	UINT Height;
+	UINT SelectIndex;
+	UINT ButtonNum;
+	_ButtonType ButtonType;
+	LPDIRECT3DTEXTURE9 Texture;
+	_ButtonImageInfo *MultiButton;
+}ButtonImageInfo, *PButtonImageInfo;
+struct ButtonInfo
+{
+	PButtonImageInfo Button;
+	UINT MaxButton;
+};
 #pragma pack(pop)
 #pragma endregion
 
 #pragma region //全局变量
 const WCHAR ClassName[] = L"QQSGDiy";
+char szCareerTip[256] = { "        阴阳士\r\n\r\n远程,术攻,高攻,施法慢" };
 HWND G_hWnd;
 BOOL DrawGame = TRUE, DrawTip = FALSE, DrawCreatPlyer = TRUE, IsMan = FALSE;
 void *BGM_Login1 = nullptr;
@@ -62,8 +77,9 @@ HSTREAM StreamBGM1;
 DirectX92D D2Dx9;
 ImeInput Ime;
 MouseInfo MousePoint = { 0 };
-UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, OldTickCount = 0, PlayerIndex = 0, Country = 0;
+UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, OldTickCount = 0, PlayerIndex = 0, Country = 0, ImeTick = 0;
 DrawImageInfo CreatePlayerImgInfo = { 0 }, CreatePlayer = { 0 };
+ButtonInfo ClButton = { 0 };
 #pragma endregion
 //窗口处理函数;
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -75,15 +91,21 @@ void PlayerBGM_Login(const char *MusicName);
 void ShowFPS();
 //资源文件加载;
 UINT LoadResourceData(const char *pFile, const char *pResName, void **pAlloc);
+//释放加载的资源文件;
+void ReleaseResourceData(void *pAlloc);
 //地图资源加载;
 void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInfo &pMapAlloc, UINT pLen, const char*pMapFile);
 //释放已加载的地图资源
 void ReleaseMapResource(DrawImageInfo &PMapImageInfo);
 //初始化绘制创建玩家资源;
 void InitDrawCreatePlayer();
+//绘制播放职业玩家;
+void PlayerChange(const char *pMapFile, DrawImageInfo &pMapAlloc);
 //绘制玩家角色创建;
 void DrawCreatePlayer();
 //输入法处理函数;
 void ImeEvent(WPARAM wParam);
 //绘制提示框;
 void DrawTipBox();
+//判断鼠标是否在选区内
+BOOL IsRectMouse(float x, float y, UINT Width, UINT Height, MouseInfo const&MousePoint);

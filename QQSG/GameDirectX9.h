@@ -14,25 +14,15 @@
 class DirectX92D
 {
 public:
-	struct ImageInfo
-	{
-		UINT                    Width;
-		UINT                    Height;
-		UINT                    Depth;
-		UINT                    MipLevels;
-		D3DFORMAT               Format;
-		D3DRESOURCETYPE         ResourceType;
-		D3DXIMAGE_FILEFORMAT    ImageFileFormat;
-	};
 	//函数定义;
 	DirectX92D();
 	~DirectX92D();
 	//初始化D3Directx9;
 	BOOL InitD3D(HWND hWnd, int Width, int Height, bool FullScreen);
 	//获取图片信息;
-	ImageInfo GetImageInfo(const wchar_t *filename);
+	D3DXIMAGE_INFO GetImageInfo(const wchar_t *filename);
 	//获取内存图片信息;
-	ImageInfo GetImageInfoInMemory(void *SrcData, UINT SrcLen);
+	D3DXIMAGE_INFO GetImageInfoInMemory(void *SrcData, UINT SrcLen);
 	//载入内存纹理;
 	LPDIRECT3DTEXTURE9 LoadMemTexture(void* ImgStream, UINT Imglen, D3DCOLOR transcolor = D3DCOLOR_XRGB(0, 0, 0));
 	//载入纹理文件;
@@ -73,6 +63,6 @@ private:
 	LPD3DXLINE Dxline;
 	LPD3DXFONT DxFont;
 	LPD3DXSPRITE D3DSprite;
-	ImageInfo Imginfo = { 0 };
+	D3DXIMAGE_INFO Imginfo = { 0 };
 };
 #endif

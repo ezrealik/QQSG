@@ -67,19 +67,19 @@ LPDIRECT3DSURFACE9 DirectX92D::GetD3DSurfacex9() {
 	return D3DSurface9;
 }
 //获取图片信息;
-DirectX92D::ImageInfo DirectX92D::GetImageInfo(const wchar_t *filename) {
+D3DXIMAGE_INFO DirectX92D::GetImageInfo(const wchar_t *filename) {
 	//get width and height from bitmap file
 	D3DXIMAGE_INFO info;
 	HRESULT result = D3DXGetImageInfoFromFile(filename, &info);
-	CopyMemory(&Imginfo, &info, sizeof(ImageInfo));
+	CopyMemory(&Imginfo, &info, sizeof(D3DXIMAGE_INFO));
 	return Imginfo;
 }
 //获取图片信息;
-DirectX92D::ImageInfo DirectX92D::GetImageInfoInMemory(void *SrcData, UINT SrcLen) {
+D3DXIMAGE_INFO DirectX92D::GetImageInfoInMemory(void *SrcData, UINT SrcLen) {
 	//get width and height from bitmap file
 	D3DXIMAGE_INFO info;
 	HRESULT result = D3DXGetImageInfoFromFileInMemory(SrcData, SrcLen, &info);
-	CopyMemory(&Imginfo, &info, sizeof(ImageInfo));
+	CopyMemory(&Imginfo, &info, sizeof(D3DXIMAGE_INFO));
 	return Imginfo;
 }
 //从内存中加载纹理;

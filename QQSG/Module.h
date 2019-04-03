@@ -21,4 +21,6 @@ private:
 	WCHAR szCurrencyPathW[MAX_PATH];
 	char szCurrencyPathA[MAX_PATH];
 };
+void MsgTipExit(const char *pTip);
+
 #endif

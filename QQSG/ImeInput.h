@@ -18,6 +18,7 @@ public:
 	void SetMaxLen(UINT Max);
 	void DeleteImeStr();
 	void Clear();
+	UINT GetImeLen();
 	void GetIMEString(HWND hWnd);
 private:
 	BOOL ImeKeyState = FALSE;
