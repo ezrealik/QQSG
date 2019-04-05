@@ -24,7 +24,7 @@ HWND G_hWnd;
 BOOL DrawThread = TRUE, ISMove, IsTip;
 WNDPROC OldDrawWndProc = nullptr, OldEditWndProc = nullptr, OldEditDelayWndProc = nullptr;
 MapImageInfo ImageInfo = { 0 };
-MouseInfo MousePoint = { 0 };
+MouseInfo MousePoint = { 0 }, Mibfh = { 0 };
 HINSTANCE G_hInst;
 HANDLE G_lpDrawThread = nullptr;
 RECT GlRect, ClRect, lRect;

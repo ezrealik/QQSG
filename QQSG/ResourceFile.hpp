@@ -10,6 +10,13 @@
 #pragma warning(disable:4996)
 namespace ResouceFile {
 	//全局数据结构
+	typedef struct _ImportFile
+	{
+		char pFile[MAX_PATH];
+		UINT AnimateMaxCount;
+		BOOL IsAnimate = FALSE;
+		_ImportFile *AnimateFile;
+	}ImportFile, *PImportFile;
 	typedef enum _ImageLoadStyle {
 		Image = 0xF1,
 		Animate = 0xF2,
@@ -73,6 +80,8 @@ namespace ResouceFile {
 		void *pAlloc = nullptr;
 
 	};
+	//类别名;
+	typedef ResourceAlloc ResourceAllocC, *PResourceAlloc;
 	//资源数据操作类
 	class  ResouceDataFile
 	{
@@ -159,11 +168,11 @@ namespace ResouceFile {
 		//获取资源索引表数量;
 		UINT GetResIndexNumber();
 		//打包地图表;
-		BOOL PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UINT CreenY);
-		//获取运行目录(ANSII编码)
-		void GetExePathA(char*dirbuf, int len);
+		BOOL PackageMap(const MapImageInfo &Resmpinfo);
 		//获取打包地图文件表
-		ResMapOInfo* GetMapImageInfo(const char *FilePath);
+		ResMapOInfo *GetMapImageInfo(const char *FilePath);
+		//获取内存打包地图文件表
+		ResMapOInfo *GetMapImageInfoImport(const char *FilePath, PImportFile &pImportFile);
 		void Release();
 	private:
 		ResDataIndexInfo *GetDataIndexAlloc = nullptr;//全局索引表;
@@ -171,6 +180,8 @@ namespace ResouceFile {
 		ResouceFileInfo *GvResfile = nullptr;//全局资源文件表;
 		UINT FileCount = 0, MaxCount = 300;//全局资源文件表数,最大文件表数量;
 		ResMapOInfo G_MapImage = { 0 };
+		//获取运行目录(ANSII编码)
+		void GetExePathA(char*dirbuf, int len);
 		//截取文件路径;
 		char *GetResDirectory(const char*dirbuf, char*sourbuf);
 		//枚举资源文件表文件名;

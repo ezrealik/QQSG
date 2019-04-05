@@ -7,8 +7,6 @@ ResouceDataFile::ResouceDataFile()
 
 ResouceDataFile::~ResouceDataFile()
 {
-	Release();
-	//OutputDebugStringA("析构函数开启!\n");
 }
 void ResouceDataFile::Release() {
 	if (GetDataIndexAlloc) {
@@ -245,7 +243,7 @@ ResouceDataFile::GetAllgpxFilepathFromfolderError ResouceDataFile::GetAllgpxFile
 	return Succeed;
 }
 //打包地图表;
-BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UINT CreenY) {
+BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo) {
 	char FileName[256] = { 0 };
 	GetExePathA(FileName, sizeof(FileName));
 	strcat(FileName, "\\ResMap.map");
@@ -342,8 +340,8 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UIN
 			ImageTexturInfo pMapInfo = Resmpinfo.Image[i];
 			WriteResMapInfo WriteResMap;
 			WriteResMap.AnimateDelay = pMapInfo.AnimateDelay;
-			WriteResMap.x = pMapInfo.x + CreenX;
-			WriteResMap.y = pMapInfo.y + CreenY;
+			WriteResMap.x = pMapInfo.x;
+			WriteResMap.y = pMapInfo.y;
 			WriteResMap.Height = pMapInfo.Height;
 			WriteResMap.Width = pMapInfo.Width;
 			WriteResMap.Scale = pMapInfo.Scale;
@@ -373,8 +371,8 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UIN
 			ImageTexturInfo _pMapInfo = Resmpinfo.Image[i];
 			WriteResMapInfo WriteResMap;
 			WriteResMap.AnimateDelay = _pMapInfo.AnimateDelay;
-			WriteResMap.x = _pMapInfo.x + CreenX;
-			WriteResMap.y = _pMapInfo.y + CreenY;
+			WriteResMap.x = _pMapInfo.x;
+			WriteResMap.y = _pMapInfo.y;
 			WriteResMap.Height = _pMapInfo.Height;
 			WriteResMap.Width = _pMapInfo.Width;
 			WriteResMap.Scale = _pMapInfo.Scale;
@@ -396,8 +394,8 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UIN
 			PAnimateImage pMapInfo = Resmpinfo.Image[i].Animate;
 			for (UINT n = 0; n < Resmpinfo.Image[i].AnimateMaxCout; n++) {
 				WriteResMap.AnimateDelay = Resmpinfo.Image[i].AnimateDelay;
-				WriteResMap.x = pMapInfo[n].x + CreenX;
-				WriteResMap.y = pMapInfo[n].y + CreenY;
+				WriteResMap.x = pMapInfo[n].x;
+				WriteResMap.y = pMapInfo[n].y;
 				WriteResMap.Height = pMapInfo[n].Height;
 				WriteResMap.Width = pMapInfo[n].Width;
 				WriteResMap.Scale = pMapInfo[n].Scale;
@@ -434,7 +432,7 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo, UINT CreenX, UIN
 	return TRUE;
 }
 //获取打包地图文件表
-ResouceDataFile::ResMapOInfo* ResouceDataFile::GetMapImageInfo(const char *FilePath) {
+ResouceDataFile::ResMapOInfo *ResouceDataFile::GetMapImageInfo(const char *FilePath) {
 	FILE *pFile = fopen(FilePath, "rb");
 	if (!pFile)return nullptr;
 	ResDataHeader MpHeader;
@@ -490,20 +488,82 @@ ResouceDataFile::ResMapOInfo* ResouceDataFile::GetMapImageInfo(const char *FileP
 	}
 	return &G_MapImage;
 }
-
-//地图信息类;
+//获取内存打包地图文件表
+ResouceDataFile::ResMapOInfo *ResouceDataFile::GetMapImageInfoImport(const char *FilePath, PImportFile &pImportFile) {
+	FILE *pFile = fopen(FilePath, "rb");
+	if (!pFile)return nullptr;
+	ResDataHeader MpHeader;
+	fread(&MpHeader, sizeof(MpHeader), 1, pFile);
+	if (strcmp(MpHeader.Header, "Map") != 0)return nullptr;
+	fseek(pFile, MpHeader.IndexPoint, SEEK_SET);
+	PReadResMapInfo pMapInfo = (PReadResMapInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ReadResMapInfo)*MpHeader.IndexNumber);
+	if (!pMapInfo)return nullptr;
+	G_MapImage.Mapinfo = pMapInfo;
+	G_MapImage.MaxCount = MpHeader.IndexNumber;
+	pImportFile = (PImportFile)LocalAlloc(LMEM_ZEROINIT, sizeof(ImportFile)*G_MapImage.MaxCount);
+	if (!pImportFile)return nullptr;
+	for (UINT i = 0; i < MpHeader.IndexNumber; i++) {
+		WriteResMapInfo ReadMapInfo;
+		fread(&ReadMapInfo, 1, sizeof(WriteResMapInfo), pFile);
+		pMapInfo[i].x = ReadMapInfo.x;
+		pMapInfo[i].y = ReadMapInfo.y;
+		pMapInfo[i].Height = ReadMapInfo.Height;
+		pMapInfo[i].Width = ReadMapInfo.Width;
+		pMapInfo[i].Scale = ReadMapInfo.Scale;
+		pMapInfo[i].ImageOffset = ReadMapInfo.ImageOffset;
+		pMapInfo[i].ImgLoadType = ReadMapInfo.ImgLoadType;
+		pMapInfo[i].AnimateDelay = ReadMapInfo.AnimateDelay;
+		pMapInfo[i].AnimateCount = ReadMapInfo.AnimateCount;
+		pMapInfo[i].ImageOriginSize = ReadMapInfo.ImageOriginSize;
+		pMapInfo[i].ImageDataSize = ReadMapInfo.ImageDataSize;
+		UINT szlen;
+		fread(&szlen, 1, sizeof(szlen), pFile);
+		char szFile[MAX_PATH] = { 0 };
+		fread(szFile, 1, szlen, pFile);
+		strcpy(pImportFile[i].pFile, szFile);
+		if (pMapInfo[i].ImgLoadType == Animate && pMapInfo[i].AnimateCount > 0) {
+			PReadResMapInfo pTmpAlloc = (PReadResMapInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ReadResMapInfo)*pMapInfo[i].AnimateCount);
+			if (!pTmpAlloc)return nullptr;
+			pMapInfo[i].Animate = pTmpAlloc;
+			pImportFile[i].AnimateMaxCount = pMapInfo[i].AnimateCount;
+			pImportFile[i].IsAnimate = TRUE;
+			pImportFile[i].AnimateFile = (PImportFile)LocalAlloc(LMEM_ZEROINIT, sizeof(ImportFile)*pImportFile[i].AnimateMaxCount);
+			for (UINT n = 0; n < pMapInfo[i].AnimateCount; n++) {
+				WriteResMapInfo ReadMapInfo;
+				fread(&ReadMapInfo, 1, sizeof(WriteResMapInfo), pFile);
+				pTmpAlloc[n].x = ReadMapInfo.x;
+				pTmpAlloc[n].y = ReadMapInfo.y;
+				pTmpAlloc[n].Height = ReadMapInfo.Height;
+				pTmpAlloc[n].Width = ReadMapInfo.Width;
+				pTmpAlloc[n].Scale = ReadMapInfo.Scale;
+				pTmpAlloc[n].ImageOffset = ReadMapInfo.ImageOffset;
+				pTmpAlloc[n].ImgLoadType = ReadMapInfo.ImgLoadType;
+				pTmpAlloc[n].AnimateDelay = ReadMapInfo.AnimateDelay;
+				pTmpAlloc[n].AnimateCount = ReadMapInfo.AnimateCount;
+				pTmpAlloc[n].ImageOriginSize = ReadMapInfo.ImageOriginSize;
+				pTmpAlloc[n].ImageDataSize = ReadMapInfo.ImageDataSize;
+				UINT szlen;
+				fread(&szlen, 1, sizeof(szlen), pFile);
+				char szFile[MAX_PATH] = { 0 };
+				fread(szFile, 1, szlen, pFile);
+				strcpy(pImportFile[i].AnimateFile[n].pFile, szFile);
+			}
+		}
+	}
+	return &G_MapImage;
+}
+//资源内存类;
 ResourceAlloc::ResourceAlloc(){
 
 }
 ResourceAlloc::~ResourceAlloc() {
-
 }
 void ResourceAlloc::Release() {
 
 }
 UINT ResourceAlloc::GetLenth() {
-
+	return 0;
 }
 UINT ResourceAlloc::GetFileCount() {
-
+	return 0;
 }

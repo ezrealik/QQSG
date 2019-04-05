@@ -58,6 +58,7 @@ typedef struct _ButtonImageInfo{
 	_ButtonType ButtonType;
 	LPDIRECT3DTEXTURE9 Texture;
 	_ButtonImageInfo *MultiButton;
+	void *ResAlloc;
 }ButtonImageInfo, *PButtonImageInfo;
 struct ButtonInfo
 {
@@ -69,9 +70,10 @@ struct ButtonInfo
 
 #pragma region //全局变量
 const WCHAR ClassName[] = L"QQSGDiy";
-char szCareerTip[256] = { "        阴阳士\r\n\r\n远程,术攻,高攻,施法慢" };
+char szCareerTip[256] = { "        阴阳士\r\n\r\n远程丶术攻丶高攻丶施法慢" };
+char szTipBoxText[1024] = { 0 };
 HWND G_hWnd;
-BOOL DrawGame = TRUE, DrawTip = FALSE, DrawCreatPlyer = TRUE, IsMan = FALSE;
+BOOL DrawGame = TRUE, DrawTip = FALSE, DrawCreatPlyer = TRUE, IsTipBox = FALSE;
 void *BGM_Login1 = nullptr;
 HSTREAM StreamBGM1;
 DirectX92D D2Dx9;
@@ -79,7 +81,10 @@ ImeInput Ime;
 MouseInfo MousePoint = { 0 };
 UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, OldTickCount = 0, PlayerIndex = 0, Country = 0, ImeTick = 0;
 DrawImageInfo CreatePlayerImgInfo = { 0 }, CreatePlayer = { 0 };
-ButtonInfo ClButton = { 0 };
+UINT 玩家职业 = 0, 玩家国家 = 0;
+BOOL 玩家性别是否为男 = FALSE;
+char 玩家名字[20] = { 0 };
+ButtonInfo ClButton = { 0 }, ClTipButton = { 0 };
 #pragma endregion
 //窗口处理函数;
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -95,17 +100,22 @@ UINT LoadResourceData(const char *pFile, const char *pResName, void **pAlloc);
 void ReleaseResourceData(void *pAlloc);
 //地图资源加载;
 void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInfo &pMapAlloc, UINT pLen, const char*pMapFile);
+//释放已加载的按钮资源
+void ReleaseButtonResource(ButtonInfo &PMapImageInfo);
 //释放已加载的地图资源
 void ReleaseMapResource(DrawImageInfo &PMapImageInfo);
-//初始化绘制创建玩家资源;
-void InitDrawCreatePlayer();
 //绘制播放职业玩家;
 void PlayerChange(const char *pMapFile, DrawImageInfo &pMapAlloc);
 //绘制玩家角色创建;
 void DrawCreatePlayer();
 //输入法处理函数;
 void ImeEvent(WPARAM wParam);
+//提示对话框;
+void SetTipDialogBoxText(const char *pText);
+void DrawTipDialogBox();
 //绘制提示框;
 void DrawTipBox();
 //判断鼠标是否在选区内
 BOOL IsRectMouse(float x, float y, UINT Width, UINT Height, MouseInfo const&MousePoint);
+//鼠标点击延迟计算;
+BOOL ClickMouseDelay();
