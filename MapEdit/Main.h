@@ -80,6 +80,10 @@ void WINAPI HideImageLayer();
 void WINAPI ShowAllHideImageLayer();
 //导入已有地图文件;
 void WINAPI ImportMap();
+//置水平镜像;
+void WINAPI AnimateMirror();
+//复制添加图片;
+void WINAPI CopyImageInfo();
 //显示FPS;
 void WINAPI ShowFPS();
 //启动线程

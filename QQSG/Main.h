@@ -47,6 +47,7 @@ typedef struct _DrawImageInfo
 {
 	PDrawMapInfo DrawMap;
 	UINT MaxInt;
+	UINT AnimateState;
 }DrawImageInfo, *PDrawImageInfo;
 typedef struct _ButtonImageInfo{
 	float x;
@@ -81,7 +82,7 @@ ImeInput GVar_Ime;
 MouseInfo GVar_MousePoint = { 0 };
 UINT GVar_OldFpsTick = 0, GVar_FPSCount = 0, GVar_NewFPSCount = 0, GVar_OldTickCount = 0, GVar_PlayerIndex = 0, GVar_Country = 0, GVar_ImeTick = 0;
 DrawImageInfo GVar_MapImageInfo = { 0 }, GVar_PlayerImageInfo = { 0 };
-UINT GVar_玩家职业 = 0, GVar_玩家国家 = 0;
+UINT GVar_玩家职业 = 0, GVar_玩家国家 = 0, GVar_CreenCentreX = 500, GVar_CreenCentreY = 500;
 BOOL GVar_玩家性别是否为男 = FALSE;
 char GVar_玩家名字[20] = { 0 };
 ButtonInfo GVar_ClButton = { 0 }, GVar_ClTipButton = { 0 };

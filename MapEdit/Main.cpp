@@ -154,6 +154,12 @@ BOOL CALLBACK WndProcc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case ID_MENU_40014:
 			CallThreadFunction(ShowAllHideImageLayer);
 			break;
+		case ID_MENU_40015:
+			CallThreadFunction(AnimateMirror);
+			break;
+		case ID_MENU_40016:
+			CallThreadFunction(CopyImageInfo);
+			break;
 		default:
 			break;
 		}
@@ -948,6 +954,29 @@ void WINAPI ImportAnimateImage() {
 	RunDrawD3D();
 	OutputDebugStringA("结束\n");
 }
+//复制添加图片;
+void WINAPI CopyImageInfo() {
+	if (ImageInfo.MaxImage < 1)return;
+	if (SelectIndex > ImageInfo.MaxImage)return;
+	CloseDrawD3D();
+	UINT MaxI = ImageInfo.MaxImage + 1;
+	void *pAlloc = LocalAlloc(LMEM_ZEROINIT, sizeof(ImageTexturInfo)*MaxI);
+	if (!pAlloc) { MessageBox(NULL, L"内存不足,申请内存失败!", NULL, NULL); ExitProcess(NULL); }
+	ZeroMemory(pAlloc, sizeof(ImageTexturInfo)*MaxI);
+	CopyMemory(pAlloc, ImageInfo.Image, sizeof(ImageTexturInfo)*ImageInfo.MaxImage);
+	LocalFree(ImageInfo.Image);
+	ImageInfo.Image = (PImageTexturInfo)pAlloc;
+	ImageInfo.MaxImage = MaxI;
+	CopyMemory(&ImageInfo.Image[ImageInfo.MaxImage - 1], &ImageInfo.Image[SelectIndex], sizeof(ImageTexturInfo));
+	if (ImageInfo.Image[SelectIndex].AnimateMaxCout > 0) {
+		UINT MaxCount = ImageInfo.Image[SelectIndex].AnimateMaxCout;
+		void *pAnimateAlloc = LocalAlloc(LMEM_ZEROINIT, sizeof(AnimateImage)*MaxCount);
+		if (!pAnimateAlloc) { MessageBox(NULL, L"内存不足,申请内存失败!", NULL, NULL); ExitProcess(NULL); }
+		CopyMemory(pAnimateAlloc, ImageInfo.Image[SelectIndex].Animate, sizeof(AnimateImage)*ImageInfo.Image[SelectIndex].AnimateMaxCout);
+		ImageInfo.Image[ImageInfo.MaxImage - 1].Animate = (PAnimateImage)pAnimateAlloc;
+	}
+	RunDrawD3D();
+}
 //上一帧动画;
 void WINAPI UpAnimateFrams() {
 	if (ImageInfo.MaxImage < 1)return;
@@ -1007,7 +1036,7 @@ void WINAPI ImportMap() {
 	//CallThreadFunction(DeleteAllImage);
 	CloseDrawD3D();
 	C_Module Mod;
-	const char *szFile = Mod.GetCurrencyPathFileA("bajun.map");
+	const char *szFile = Mod.GetCurrencyPathFileA("ResMap.map");
 	ResouceDataFile ResFile;
 	PImportFile ImpFile = nullptr;
 	ResouceDataFile::ResMapOInfo *Res = ResFile.GetMapImageInfoImport(szFile, ImpFile);
@@ -1064,6 +1093,14 @@ void WINAPI ImportMap() {
 		}
 	}
 	RunDrawD3D();
+}
+//置水平镜像;
+void WINAPI AnimateMirror() {
+	if (ImageInfo.MaxImage < 1)return;
+	if (SelectIndex > ImageInfo.MaxImage)return;
+	//CloseDrawD3D();
+	ImageInfo.Image[SelectIndex].Scale = 0x86733FA;
+	//RunDrawD3D();
 }
 //启动线程
 void WINAPI CallThreadFunction(void *FuncAddress) {

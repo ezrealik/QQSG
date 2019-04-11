@@ -57,9 +57,33 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_KEYDOWN:
 		GVar_Ime.SetKeyState(TRUE);
 		ImeEvent(wParam);
+		switch (LOWORD(wParam))
+		{
+		case VK_LEFT:
+			if (GVar_PlayerImageInfo.MaxInt >= 1)GVar_PlayerImageInfo.AnimateState = 5;
+			GVar_CreenCentreX -= 2;
+			break;
+		case VK_RIGHT:
+			if (GVar_PlayerImageInfo.MaxInt >= 1)GVar_PlayerImageInfo.AnimateState = 4;
+			GVar_CreenCentreX += 2;
+			break;
+		default:
+			break;
+		}
 		break;
 	case WM_KEYUP:
 		GVar_Ime.SetKeyState(FALSE);
+		switch (LOWORD(wParam))
+		{
+		case VK_LEFT:
+			GVar_PlayerImageInfo.AnimateState = 1;
+			break;
+		case VK_RIGHT:
+			GVar_PlayerImageInfo.AnimateState = 0;
+			break;
+		default:
+			break;
+		}
 		break;
 	case WM_MOUSEMOVE:
 		GVar_MousePoint.KeyCode = wParam;
@@ -358,6 +382,10 @@ void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInf
 				fread(pDataAlloc, 1, Anminf.ImageDataSize, pFile);
 				UINT UnzipLen = Anminf.ImageOriginSize;
 				uncompress(pUnzipAlloc, (uLongf*)&UnzipLen, pDataAlloc, Anminf.ImageDataSize);
+				if (mpinf.Scale == 0x86733FA) {
+					C_Module Mod;
+					Mod.MirrorBitmap(pUnzipAlloc, Anminf.ImageOriginSize);
+				}
 				DrawMpAnimate[n].Texture = GVar_D2Dx9.LoadMemTexture(pUnzipAlloc, Anminf.ImageOriginSize);
 				DrawMpAnimate[n].ResAlloc = pUnzipAlloc;
 				DrawMpAnimate[n].x = Anminf.x;
@@ -767,7 +795,7 @@ void DrawCreatePlayer() {
 }
 void InitCityMapResource() {
 	C_Module Mod;
-	const char *szPath = Mod.GetCurrencyPathFileA("ResMap.map");
+	const char *szPath = Mod.GetCurrencyPathFileA("bajun.map");
 	ResouceDataFile Resdatfile;
 	ResouceDataFile::ResMapOInfo *MpImginfo = Resdatfile.GetMapImageInfo(szPath);
 	if (!MpImginfo) MsgTipExit("程序加载资源出现未知错误!");
@@ -779,6 +807,15 @@ void InitCityMapResource() {
 	LoadMapResourceData(MpImginfo, GVar_MapImageInfo, MaxAllocLen, szPath);
 	//加载人物动画;
 	Resdatfile.Release();
+	szPath = Mod.GetCurrencyPathFileA("ResMap.map");
+	MpImginfo = Resdatfile.GetMapImageInfo(szPath);
+	if (!MpImginfo) MsgTipExit("程序加载资源出现未知错误!");
+	if (GVar_PlayerImageInfo.MaxInt > 0)MsgTipExit("程序加载资源出现未知错误!");
+	MaxAllocLen = sizeof(DrawMapInfo)*MpImginfo->MaxCount;
+	GVar_PlayerImageInfo.DrawMap = (PDrawMapInfo)LocalAlloc(LMEM_ZEROINIT, MaxAllocLen);
+	GVar_PlayerImageInfo.MaxInt = MpImginfo->MaxCount;
+	if (!GVar_PlayerImageInfo.DrawMap) MsgTipExit("申请内存失败,内存不足!");
+	LoadMapResourceData(MpImginfo, GVar_PlayerImageInfo, MaxAllocLen, szPath);
 }
 //绘制城市地图;
 void DrawCityMap() {
@@ -799,5 +836,16 @@ void DrawCityMap() {
 			DrawMapInfo DrwMpAn = DrwMp->Animate[DrwMp->AnimateTickIndex];
 			GVar_D2Dx9.DrawTexture(DrwMpAn.Texture, DrwMpAn.x, DrwMpAn.y, DrwMpAn.width, DrwMpAn.height, DrwMpAn.Scale, DrwMpAn.rotation);
 		}
+	}
+	PDrawMapInfo DrwMp = &GVar_PlayerImageInfo.DrawMap[GVar_PlayerImageInfo.AnimateState];
+	if (DrwMp->ImgLoadType == Animate) {
+		if (GetTickCount() - DrwMp->AnimateOldTick > DrwMp->AnimateDelay) {
+			DrwMp->AnimateTickIndex++;
+			DrwMp->AnimateOldTick = GetTickCount();
+			if (DrwMp->AnimateTickIndex >= DrwMp->AnimateMaxCount)
+				DrwMp->AnimateTickIndex = 0;
+		}
+		DrawMapInfo DrwMpAn = DrwMp->Animate[DrwMp->AnimateTickIndex];
+		GVar_D2Dx9.DrawTexture(DrwMpAn.Texture, DrwMpAn.x + GVar_CreenCentreX, DrwMpAn.y + GVar_CreenCentreY, DrwMpAn.width, DrwMpAn.height, DrwMpAn.Scale, DrwMpAn.rotation);
 	}
 }
