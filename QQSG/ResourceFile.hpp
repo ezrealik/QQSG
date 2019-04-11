@@ -18,7 +18,7 @@ namespace ResouceFile {
 		_ImportFile *AnimateFile;
 	}ImportFile, *PImportFile;
 	typedef enum _ImageLoadStyle {
-		Image = 0xF1,
+		_Image = 0xF1,
 		Animate = 0xF2,
 		Button = 0xF3,
 	}ImageLoadStyle;

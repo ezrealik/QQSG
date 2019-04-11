@@ -25,7 +25,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 	return 0;
 }
-
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	char path[256] = { 0 };
 	switch (uMsg)
@@ -331,7 +330,7 @@ void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInf
 		DrawMp->AnimateDelay = mpinf.AnimateDelay;
 		DrawMp->AnimateOldTick = GetTickCount();
 		DrawMp->AnimateTickIndex = 0;
-		if (mpinf.ImgLoadType == Image) {
+		if (mpinf.ImgLoadType == _Image) {
 			Bytef *pUnzipAlloc = (Bytef*)LocalAlloc(LMEM_ZEROINIT, mpinf.ImageOriginSize);
 			if (!pUnzipAlloc) MsgTipExit("程序加载资源出现未知错误!");
 			Bytef *pDataAlloc = (Bytef*)LocalAlloc(LMEM_ZEROINIT, mpinf.ImageDataSize);
@@ -379,7 +378,7 @@ void LoadMapResourceData(ResouceDataFile::ResMapOInfo *ResMpIOinfo, DrawImageInf
 void ReleaseMapResource(DrawImageInfo &PMapImageInfo) {
 	if (PMapImageInfo.MaxInt < 1 || PMapImageInfo.DrawMap == nullptr)return;
 	for (UINT i = 0; i < PMapImageInfo.MaxInt; i++) {
-		if (PMapImageInfo.DrawMap[i].ImgLoadType == Image) {
+		if (PMapImageInfo.DrawMap[i].ImgLoadType == _Image) {
 			if (PMapImageInfo.DrawMap[i].Texture)PMapImageInfo.DrawMap[i].Texture->Release();
 			LocalFree(PMapImageInfo.DrawMap[i].ResAlloc);
 		}
@@ -597,35 +596,6 @@ void PlayerButton() {
 		}
 	}
 }
-/*.版本 2
-
-色区 ＝ 位图_取色区 (参_位图)
-位图宽度 ＝ 位图_取宽度 (参_位图)
-行字节宽度 ＝ 位与 (位图宽度 × 3 ＋ 3, -4)
-位图高度 ＝ 位图_取高度 (参_位图)
-
-文件号 ＝ 打开内存文件 ()
-
-.判断循环首 (行索引 ＜ 位图高度)
-	处理事件 ()
-	行字节集 ＝ 取字节集中间 (色区, 行字节宽度 × 行索引 ＋ 1, 行字节宽度)
-	n ＝ 位图宽度 × 3
-	.判断循环首 (n ＞ 0)
-		写出字节集 (文件号, 取字节集中间 (行字节集, n － 2, 3))
-		n ＝ n － 3
-	.判断循环尾 ()
-	写出字节集 (文件号, 取字节集中间 (行字节集, 位图宽度 × 3 ＋ 1, 3))
-	行索引 ＝ 行索引 ＋ 1
-.判断循环尾 ()
-
-移到文件首 (文件号)
-新色区 ＝ 读入字节集 (文件号, 取文件长度 (文件号))
-关闭文件 (文件号)
-
-写到文件 (取运行目录 () ＋ “\c.bmp”, 组成位图 (新色区, 位图宽度, －位图高度))
-
-返回 (组成位图 (新色区, 位图宽度, 位图高度))
-*/
 //绘制玩家角色创建;
 void DrawCreatePlayer() {
 	//判断是否初始化过;
@@ -633,7 +603,7 @@ void DrawCreatePlayer() {
 	//绘制显示UI;
 	for (UINT i = 0; i < CreatePlayerImgInfo.MaxInt; i++) {
 		PDrawMapInfo DrwMp = &CreatePlayerImgInfo.DrawMap[i];
-		if (DrwMp->ImgLoadType == Image) {
+		if (DrwMp->ImgLoadType == _Image) {
 			D2Dx9.DrawTexture(DrwMp->Texture, DrwMp->x, DrwMp->y, DrwMp->width, DrwMp->height, DrwMp->Scale, DrwMp->rotation);
 		}
 		else if (DrwMp->ImgLoadType == Animate) {
@@ -649,7 +619,7 @@ void DrawCreatePlayer() {
 	}
 	for (UINT i = 0; i < CreatePlayer.MaxInt; i++) {
 		PDrawMapInfo DrwMp = &CreatePlayer.DrawMap[i];
-		if (DrwMp->ImgLoadType == Image) {
+		if (DrwMp->ImgLoadType == _Image) {
 			D2Dx9.DrawTexture(DrwMp->Texture, DrwMp->x, DrwMp->y, DrwMp->width, DrwMp->height, DrwMp->Scale, DrwMp->rotation);
 		}
 		else if (DrwMp->ImgLoadType == Animate) {

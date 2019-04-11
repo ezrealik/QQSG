@@ -5,8 +5,9 @@
 #include "Package.h"
 #include "PackageDlg.h"
 #include "afxdialogex.h"
-#include "../QQSG/ResourceFile.h"
+#include "../QQSG/ResourceFile.hpp"
 #pragma warning(disable:4996)
+using namespace ResouceFile;
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif

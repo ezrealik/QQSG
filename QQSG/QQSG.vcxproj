@@ -169,6 +169,7 @@
     <ClCompile Include="zlib\zutil.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BmpData.h" />
     <ClInclude Include="GameDirectX9.h" />
     <ClInclude Include="ImeInput.h" />
     <ClInclude Include="Main.h" />

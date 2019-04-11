@@ -23,13 +23,13 @@
     <ProjectGuid>{44B3FA31-E9B8-4B95-BB9D-8B61DB9BB83D}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
     <RootNamespace>Package</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
@@ -76,6 +76,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(WindowsSDK_IncludePath);$(VC_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -185,26 +186,41 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\QQSG\ResourceFile.h" />
+    <ClInclude Include="..\QQSG\ResourceFile.hpp" />
+    <ClInclude Include="..\QQSG\zlib\crc32.h" />
+    <ClInclude Include="..\QQSG\zlib\deflate.h" />
+    <ClInclude Include="..\QQSG\zlib\gzguts.h" />
+    <ClInclude Include="..\QQSG\zlib\inffast.h" />
+    <ClInclude Include="..\QQSG\zlib\inffixed.h" />
+    <ClInclude Include="..\QQSG\zlib\inflate.h" />
+    <ClInclude Include="..\QQSG\zlib\inftrees.h" />
+    <ClInclude Include="..\QQSG\zlib\trees.h" />
+    <ClInclude Include="..\QQSG\zlib\zconf.h" />
+    <ClInclude Include="..\QQSG\zlib\zlib.h" />
+    <ClInclude Include="..\QQSG\zlib\zutil.h" />
     <ClInclude Include="Package.h" />
     <ClInclude Include="PackageDlg.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="zlib\crc32.h" />
-    <ClInclude Include="zlib\deflate.h" />
-    <ClInclude Include="zlib\gzguts.h" />
-    <ClInclude Include="zlib\inffast.h" />
-    <ClInclude Include="zlib\inffixed.h" />
-    <ClInclude Include="zlib\inflate.h" />
-    <ClInclude Include="zlib\inftrees.h" />
-    <ClInclude Include="zlib\trees.h" />
-    <ClInclude Include="zlib\zconf.h" />
-    <ClInclude Include="zlib\zlib.h" />
-    <ClInclude Include="zlib\zutil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\QQSG\ResouceFile.cpp" />
+    <ClCompile Include="..\QQSG\zlib\adler32.c" />
+    <ClCompile Include="..\QQSG\zlib\compress.c" />
+    <ClCompile Include="..\QQSG\zlib\crc32.c" />
+    <ClCompile Include="..\QQSG\zlib\deflate.c" />
+    <ClCompile Include="..\QQSG\zlib\gzclose.c" />
+    <ClCompile Include="..\QQSG\zlib\gzlib.c" />
+    <ClCompile Include="..\QQSG\zlib\gzread.c" />
+    <ClCompile Include="..\QQSG\zlib\gzwrite.c" />
+    <ClCompile Include="..\QQSG\zlib\infback.c" />
+    <ClCompile Include="..\QQSG\zlib\inffast.c" />
+    <ClCompile Include="..\QQSG\zlib\inflate.c" />
+    <ClCompile Include="..\QQSG\zlib\inftrees.c" />
+    <ClCompile Include="..\QQSG\zlib\trees.c" />
+    <ClCompile Include="..\QQSG\zlib\uncompr.c" />
+    <ClCompile Include="..\QQSG\zlib\zutil.c" />
     <ClCompile Include="Package.cpp" />
     <ClCompile Include="PackageDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -213,21 +229,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="zlib\adler32.c" />
-    <ClCompile Include="zlib\compress.c" />
-    <ClCompile Include="zlib\crc32.c" />
-    <ClCompile Include="zlib\deflate.c" />
-    <ClCompile Include="zlib\gzclose.c" />
-    <ClCompile Include="zlib\gzlib.c" />
-    <ClCompile Include="zlib\gzread.c" />
-    <ClCompile Include="zlib\gzwrite.c" />
-    <ClCompile Include="zlib\infback.c" />
-    <ClCompile Include="zlib\inffast.c" />
-    <ClCompile Include="zlib\inflate.c" />
-    <ClCompile Include="zlib\inftrees.c" />
-    <ClCompile Include="zlib\trees.c" />
-    <ClCompile Include="zlib\uncompr.c" />
-    <ClCompile Include="zlib\zutil.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Package.rc" />

@@ -258,7 +258,7 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo) {
 	UINT IndexNum = Resmpinfo.MaxImage;
 	for (UINT i = 0; i < Resmpinfo.MaxImage; i++) {
 		if (Resmpinfo.Image[i].IsHide) { IndexNum--; continue; }
-		if (Resmpinfo.Image[i].ImgLoadType == Image) {
+		if (Resmpinfo.Image[i].ImgLoadType == _Image) {
 			//UNICODE×Ö·û×ªANSII×Ö·û
 			UINT len = wcslen(Resmpinfo.Image[i].ImageFile);
 			if (!WideCharToMultiByte(CP_ACP, NULL, Resmpinfo.Image[i].ImageFile, len * sizeof(WCHAR), FileName, sizeof(FileName), NULL, NULL))return FALSE;
@@ -283,7 +283,7 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo) {
 			ResMp[i].ImageDataSize = ReadLen;
 			//µØÍ¼Ë÷Òý±íÆ«ÒÆ;
 			ResMp[i].ImageOffset = ftell(pFile);
-			ResMp[i].LoadStyle = Image;
+			ResMp[i].LoadStyle = _Image;
 			fwrite(lzip, ReadLen, 1, pFile);
 			fflush(pNewFile);
 			fflush(pFile);
@@ -336,7 +336,7 @@ BOOL ResouceDataFile::PackageMap(const MapImageInfo &Resmpinfo) {
 	ResMapHeader.IndexPoint = ftell(pFile);
 	for (UINT i = 0; i < Resmpinfo.MaxImage; i++) {
 		if (Resmpinfo.Image[i].IsHide) continue;
-		if (ResMp[i].LoadStyle == Image) {
+		if (ResMp[i].LoadStyle == _Image) {
 			ImageTexturInfo pMapInfo = Resmpinfo.Image[i];
 			WriteResMapInfo WriteResMap;
 			WriteResMap.AnimateDelay = pMapInfo.AnimateDelay;

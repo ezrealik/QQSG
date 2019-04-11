@@ -196,7 +196,7 @@ HRESULT CALLBACK DrawWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					ImageInfo.Image[ImageInfo.MaxImage - 1].Height = ImgInfo.Height;
 					ImageInfo.Image[ImageInfo.MaxImage - 1].Scale = 1.0f;
 					ImageInfo.Image[ImageInfo.MaxImage - 1].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
-					ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = Image;
+					ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = _Image;
 				}
 				else {
 					void *pAlloc = LocalAlloc(LMEM_ZEROINIT, sizeof(ImageTexturInfo));
@@ -211,7 +211,7 @@ HRESULT CALLBACK DrawWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					ImageInfo.Image[ImageInfo.MaxImage - 1].Height = ImgInfo.Height;
 					ImageInfo.Image[ImageInfo.MaxImage - 1].Scale = 1.0f;
 					ImageInfo.Image[ImageInfo.MaxImage - 1].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
-					ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = Image;
+					ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = _Image;
 				}
 				OutputDebugString(szFileName);
 				OutputDebugString(L"\n");
@@ -247,7 +247,7 @@ void WINAPI DrawD3D() {
 				if(!ImageInfo.Image)break;
 				//≈–∂œ «∂Øª≠÷°ªπ «±≥æ∞Õº∆¨;
 				if (ImageInfo.Image[i].IsHide)continue;
-				if (ImageInfo.Image[i].ImgLoadType == Image) {
+				if (ImageInfo.Image[i].ImgLoadType == _Image) {
 					if (MousePoint.x - X > ImageInfo.Image[i].x - (float)ImageCreenX && MousePoint.x - X< (ImageInfo.Image[i].x - (float)ImageCreenX) + ImageInfo.Image[i].Width
 						&& MousePoint.y - Y > ImageInfo.Image[i].y - (float)ImageCreenY && MousePoint.y - Y < (ImageInfo.Image[i].y - (float)ImageCreenY) + ImageInfo.Image[i].Height) {
 						if (!ISMove)CurrencyIndex = i;
@@ -265,7 +265,7 @@ void WINAPI DrawD3D() {
 			//≈–∂œ «∑Ò‘⁄Õº∆¨—°«¯÷–
 			if (ImageInfo.MaxImage > CurrencyIndex) {
 				if (!ImageInfo.Image)continue;
-				if (ImageInfo.Image[CurrencyIndex].ImgLoadType == Image) {
+				if (ImageInfo.Image[CurrencyIndex].ImgLoadType == _Image) {
 					if (MousePoint.x - X > ImageInfo.Image[CurrencyIndex].x - (float)ImageCreenX && MousePoint.x - X < (ImageInfo.Image[CurrencyIndex].x - (float)ImageCreenX) + ImageInfo.Image[CurrencyIndex].Width
 						&& MousePoint.y - Y > ImageInfo.Image[CurrencyIndex].y - (float)ImageCreenX && MousePoint.y - Y < (ImageInfo.Image[CurrencyIndex].y - (float)ImageCreenY) + ImageInfo.Image[CurrencyIndex].Height) {
 						if (MousePoint.KeyCode == MK_LBUTTON && MousePoint.KeyState == WM_LBUTTONDOWN) {
@@ -409,7 +409,7 @@ void WINAPI DrawD3D() {
 			for (UINT i = 0; i < ImageInfo.MaxImage; i++) {
 				if (ImageInfo.Image != nullptr) {
 					if (ImageInfo.Image[i].IsHide)continue;
-					if (ImageInfo.Image[i].ImgLoadType == Image) {
+					if (ImageInfo.Image[i].ImgLoadType == _Image) {
 						//—°÷–Õº∆¨ «∑Ò∏ﬂ¡¡œ‘ æ
 						if (SendMessage(GetDlgItem(G_hWnd, IDC_CHECK_HeightLight), BM_GETCHECK, 0, 0) == BST_CHECKED) {
 							if (ImageInfo.Image[i].HeightLight)
@@ -460,7 +460,7 @@ void WINAPI DrawD3D() {
 				}
 				if (GetKeyState(VK_DOWN) & 0x8000) {
 					if (SelectIndex < ImageInfo.MaxImage) {
-						if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						if (ImageInfo.Image[SelectIndex].ImgLoadType == _Image) {
 							ImageInfo.Image[SelectIndex].y++;
 						}
 						if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
@@ -470,7 +470,7 @@ void WINAPI DrawD3D() {
 				}
 				if (GetKeyState(VK_UP) & 0x8000) {
 					if (SelectIndex < ImageInfo.MaxImage) {
-						if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						if (ImageInfo.Image[SelectIndex].ImgLoadType == _Image) {
 							ImageInfo.Image[SelectIndex].y--;
 						}
 						if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
@@ -480,7 +480,7 @@ void WINAPI DrawD3D() {
 				}
 				if (GetKeyState(VK_LEFT) & 0x8000) {
 					if (SelectIndex < ImageInfo.MaxImage) {
-						if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						if (ImageInfo.Image[SelectIndex].ImgLoadType == _Image) {
 							ImageInfo.Image[SelectIndex].x--;
 						}
 						if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
@@ -490,7 +490,7 @@ void WINAPI DrawD3D() {
 				}
 				if (GetKeyState(VK_RIGHT) & 0x8000) {
 					if (SelectIndex < ImageInfo.MaxImage) {
-						if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+						if (ImageInfo.Image[SelectIndex].ImgLoadType == _Image) {
 							ImageInfo.Image[SelectIndex].x++;
 						}
 						if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
@@ -550,7 +550,7 @@ void WINAPI DrawD3D() {
 			D3DDevice9->Present(NULL, NULL, NULL, NULL);
 			if (IsTip) {
 				char ImgInfo[256] = { 0 };
-				if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+				if (ImageInfo.Image[SelectIndex].ImgLoadType == _Image) {
 					sprintf(ImgInfo, "Õº∆¨X:%.2f\t\tÕº∆¨Y:%.2f\r\n\r\nÕº∆¨∏ﬂ:%d\t\tÕº∆¨øÌ:%d\r\n\r\nÕº∆¨À˜“˝:%d\t\tÕº∆¨◊‹ ˝:%d\r\n", ImageInfo.Image[SelectIndex].x, ImageInfo.Image[SelectIndex].y,
 						ImageInfo.Image[SelectIndex].Width, ImageInfo.Image[SelectIndex].Height, CurrencyIndex, ImageInfo.MaxImage);
 					SetWindowTextA(GetDlgItem(G_hWnd, IDC_Label_Tip), ImgInfo);
@@ -657,7 +657,7 @@ HRESULT CALLBACK EditScaleWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		GetWindowTextA(hWnd, Buf, sizeof(Buf));
 		fScale = (float)atof(Buf);
 		if (fScale > 0.0f) {
-			if (ImageInfo.Image[SelectIndex].ImgLoadType == Image) {
+			if (ImageInfo.Image[SelectIndex].ImgLoadType == _Image) {
 				ImageInfo.Image[SelectIndex].Scale = fScale;
 			}
 			else if (ImageInfo.Image[SelectIndex].ImgLoadType == Animate) {
@@ -692,7 +692,7 @@ void WINAPI DeleteAllImage() {
 	if (ImageInfo.MaxImage <= 0)return;
 	CloseDrawD3D();
 	for (UINT i = 0; i < ImageInfo.MaxImage; i++) {
-		if (ImageInfo.Image[i].ImgLoadType == Image) {
+		if (ImageInfo.Image[i].ImgLoadType == _Image) {
 			if (ImageInfo.Image[i].Texture)ImageInfo.Image[i].Texture->Release();
 		}
 		else if (ImageInfo.Image[i].ImgLoadType == Animate) {
@@ -824,7 +824,7 @@ void WINAPI ImportImage() {
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Height = ImgInfo.Height;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Scale = 1.0f;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
-				ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = Image;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = _Image;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].x = (float)ImageCreenX;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].y = (float)ImageCreenY;
 			}
@@ -841,7 +841,7 @@ void WINAPI ImportImage() {
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Height = ImgInfo.Height;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].Scale = 1.0f;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
-				ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = Image;
+				ImageInfo.Image[ImageInfo.MaxImage - 1].ImgLoadType = _Image;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].x = (float)ImageCreenX;
 				ImageInfo.Image[ImageInfo.MaxImage - 1].y = (float)ImageCreenY;
 			}
@@ -1016,7 +1016,7 @@ void WINAPI ImportMap() {
 	ImageInfo.Image = (PImageTexturInfo)LocalAlloc(LMEM_ZEROINIT, sizeof(ImageTexturInfo)*ImageInfo.MaxImage);
 	if(!ImageInfo.Image)MessageBox(nullptr, L"ƒ⁄¥Ê…Í«Î ß∞‹!", NULL, NULL);
 	for (UINT i = 0; i < Res->MaxCount; i++) {
-		if (Res->Mapinfo[i].ImgLoadType == Image) {
+		if (Res->Mapinfo[i].ImgLoadType == _Image) {
 			WCHAR Butff[MAX_PATH] = { 0 };
 			const char *szIteFile = Mod.GetCurrencyPathFileA(ImpFile[i].pFile);
 			MultiByteToWideChar(CP_ACP, NULL, szIteFile, strlen(szIteFile) + 1, Butff, sizeof(Butff));
@@ -1031,7 +1031,7 @@ void WINAPI ImportMap() {
 			ImageInfo.Image[i].Height = Res->Mapinfo[i].Height;
 			ImageInfo.Image[i].Scale = Res->Mapinfo[i].Scale;
 			ImageInfo.Image[i].RectAngleColor = D3DCOLOR_XRGB(255, 255, 255);
-			ImageInfo.Image[i].ImgLoadType = Image;
+			ImageInfo.Image[i].ImgLoadType = _Image;
 			ImageInfo.Image[i].x = (float)Res->Mapinfo[i].x;
 			ImageInfo.Image[i].y = (float)Res->Mapinfo[i].y;
 		}

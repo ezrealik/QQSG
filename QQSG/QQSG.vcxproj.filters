@@ -134,5 +134,8 @@
     <ClInclude Include="ResourceFile.hpp">
       <Filter>源文件\头文件</Filter>
     </ClInclude>
+    <ClInclude Include="BmpData.h">
+      <Filter>源文件\头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
