@@ -69,22 +69,22 @@ struct ButtonInfo
 #pragma endregion
 
 #pragma region //全局变量
-const WCHAR ClassName[] = L"QQSGDiy";
-char szCareerTip[256] = { "        阴阳士\r\n\r\n远程丶术攻丶高攻丶施法慢" };
-char szTipBoxText[1024] = { 0 };
-HWND G_hWnd;
-BOOL DrawGame = TRUE, DrawTip = FALSE, DrawCreatPlyer = TRUE, IsTipBox = FALSE;
-void *BGM_Login1 = nullptr;
-HSTREAM StreamBGM1;
-DirectX92D D2Dx9;
-ImeInput Ime;
-MouseInfo MousePoint = { 0 };
-UINT OldFpsTick = 0, FPSCount = 0, NewFPSCount = 0, OldTickCount = 0, PlayerIndex = 0, Country = 0, ImeTick = 0;
-DrawImageInfo CreatePlayerImgInfo = { 0 }, CreatePlayer = { 0 };
-UINT 玩家职业 = 0, 玩家国家 = 0;
-BOOL 玩家性别是否为男 = FALSE;
-char 玩家名字[20] = { 0 };
-ButtonInfo ClButton = { 0 }, ClTipButton = { 0 };
+const WCHAR GVar_ClassName[] = L"QQSGDiy";
+char GVar_szCareerTip[256] = { "        阴阳士\r\n\r\n远程丶术攻丶高攻丶施法慢" };
+char GVar_szTipBoxText[1024] = { 0 };
+HWND GVar_hWnd;
+BOOL GVar_DrawGame = TRUE, GVar_DrawTip = FALSE, GVar_DrawCreatPlyer = TRUE, GVar_IsTipBox = FALSE, GVar_DrawCityMappl = FALSE;
+void *GVar_BGM_Login1 = nullptr;
+HSTREAM GVar_StreamBGM1;
+DirectX92D GVar_D2Dx9;
+ImeInput GVar_Ime;
+MouseInfo GVar_MousePoint = { 0 };
+UINT GVar_OldFpsTick = 0, GVar_FPSCount = 0, GVar_NewFPSCount = 0, GVar_OldTickCount = 0, GVar_PlayerIndex = 0, GVar_Country = 0, GVar_ImeTick = 0;
+DrawImageInfo GVar_MapImageInfo = { 0 }, GVar_PlayerImageInfo = { 0 };
+UINT GVar_玩家职业 = 0, GVar_玩家国家 = 0;
+BOOL GVar_玩家性别是否为男 = FALSE;
+char GVar_玩家名字[20] = { 0 };
+ButtonInfo GVar_ClButton = { 0 }, GVar_ClTipButton = { 0 };
 #pragma endregion
 //窗口处理函数;
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -119,3 +119,5 @@ void DrawTipBox();
 BOOL IsRectMouse(float x, float y, UINT Width, UINT Height, MouseInfo const&MousePoint);
 //鼠标点击延迟计算;
 BOOL ClickMouseDelay();
+//绘制城市地图;
+void DrawCityMap();

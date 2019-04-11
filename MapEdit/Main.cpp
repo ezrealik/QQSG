@@ -1007,7 +1007,7 @@ void WINAPI ImportMap() {
 	//CallThreadFunction(DeleteAllImage);
 	CloseDrawD3D();
 	C_Module Mod;
-	const char *szFile = Mod.GetCurrencyPathFileA("ResMap.map");
+	const char *szFile = Mod.GetCurrencyPathFileA("bajun.map");
 	ResouceDataFile ResFile;
 	PImportFile ImpFile = nullptr;
 	ResouceDataFile::ResMapOInfo *Res = ResFile.GetMapImageInfoImport(szFile, ImpFile);

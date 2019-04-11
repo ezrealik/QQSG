@@ -24,9 +24,9 @@ public:
 	//获取内存图片信息;
 	D3DXIMAGE_INFO GetImageInfoInMemory(void *SrcData, UINT SrcLen);
 	//载入内存纹理;
-	LPDIRECT3DTEXTURE9 LoadMemTexture(void* ImgStream, UINT Imglen, D3DCOLOR transcolor = D3DCOLOR_XRGB(0, 0, 0));
+	LPDIRECT3DTEXTURE9 LoadMemTexture(void* ImgStream, UINT Imglen, D3DCOLOR transcolor = NULL);
 	//载入纹理文件;
-	LPDIRECT3DTEXTURE9 LoadTexture(const wchar_t* filename, D3DCOLOR transcolor = D3DCOLOR_XRGB(0, 0, 0));
+	LPDIRECT3DTEXTURE9 LoadTexture(const wchar_t* filename, D3DCOLOR transcolor = NULL);
 	//载入纹理文件;
 	LPDIRECT3DTEXTURE9 LoadRectTexture(const wchar_t* filename, UINT Width, UINT Height, D3DCOLOR transcolor = D3DCOLOR_XRGB(0, 0, 0));
 	//绘制一个材质;(材质,x,y,宽度,高度,缩放比例,旋转方向,颜色);

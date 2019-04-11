@@ -64,6 +64,8 @@ namespace ResouceFile {
 		UINT Width;
 		UINT Height;
 		float Scale;
+		/*BOOL IsMirror;
+		BOOL MirrorVertical;*/
 		UINT AnimateDelay;
 		ImageLoadStyle ImgLoadType;
 		UINT AnimateCount;
