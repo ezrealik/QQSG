@@ -1107,3 +1107,4 @@ void WINAPI CallThreadFunction(void *FuncAddress) {
 	HANDLE lThreadHandle = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)FuncAddress, NULL, NULL, NULL);
 	CloseHandle(lThreadHandle);
 }
+
